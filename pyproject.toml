@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wxlab"
+version = "0.1.0"
+description = "Code for weather-data-lab: ingesting and quality-checking weather station and radar data."
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "pandas",
+  "pyarrow",
+  "xarray",
+  "s3fs",
+  "matplotlib",
+  "scipy",
+  "ruptures",
+  "scikit-learn",
+]
+
+[project.optional-dependencies]
+reference = ["herbie-data", "cfgrib"]
+radar = ["arm-pyart"]
+pipelines = ["ray[data]", "pyspark", "apache-beam"]
+model = ["lightgbm"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

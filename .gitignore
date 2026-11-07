@@ -1,0 +1,8 @@
+data/
+*.parquet
+*.zarr/
+.ipynb_checkpoints/
+__pycache__/
+*.egg-info/
+.venv/
+.env
