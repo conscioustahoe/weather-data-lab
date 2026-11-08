@@ -32,7 +32,6 @@ Each notebook is one step of the project and one chapter of learning. It tells a
 
 | # | Notebook | Phase | What it covers |
 |---|---|---|---|
-| 00 | [The map](notebooks/00-the-map.ipynb) | 1 | The path from sensor to model, and where each notebook sits on it |
 | 01 | [Stations: read and explore](notebooks/01-stations-read-and-explore.ipynb) | 1 | Station archives, the ISD format, report types, quality codes, gaps |
 | 03 | [Matching to a reference](notebooks/03-matching-to-a-reference.ipynb) | 1 | The HRRR model, GRIB2, forecast vs analysis, height correction, representativeness |
 | 04 | [How data goes wrong](notebooks/04-how-data-goes-wrong.ipynb) | 1 | Planting known faults: step, drift, bias, stuck sensor, time offset, storm gaps |
@@ -45,13 +44,6 @@ Each notebook is one step of the project and one chapter of learning. It tells a
 | 08 | [Spark and Beam](notebooks/08-spark-and-beam.ipynb) | 2 | The same job in Spark, a first Beam pipeline, and how the frameworks compare |
 | 11 | Gridded data at scale | 2 | xarray, Zarr and xarray-beam on four years of HRRR over California |
 
-Two **tool primers** teach the tools on synthetic data, so they can be read before or alongside the project notebooks:
-
-| # | Primer | What it covers |
-|---|---|---|
-| P1 | [Arrays](notebooks/P1-arrays-primer.ipynb) | xarray (labels, selection, groupby, climatology, weighting), dask, Zarr (chunks, compression, append and region writes, missing chunks), chunk layout and rechunking |
-| P2 | [Pipelines](notebooks/P2-pipelines-primer.ipynb) | Beam (transforms, streaming windows, watermarks, late data), xarray-beam (rechunking and reductions on chunked arrays), Spark (DataFrames, shuffles, window functions, joins, partitioned Parquet, Structured Streaming) |
-
 Reusable code lives in `src/wxlab/`, so the notebooks stay short. Reference notes live in `docs/`, including a running [glossary](docs/glossary.md).
 
 ## Running the notebooks
@@ -62,7 +54,7 @@ The notebooks run locally on a laptop; no GPU is needed. Create an environment a
 uv venv .venv && uv pip install -e ".[reference,radar,model,arrays,pipelines]"
 ```
 
-Reading HRRR's GRIB2 files needs the ecCodes library (`brew install eccodes` on macOS). Spark needs a Java 17 or 21 runtime; the pipelines primer looks for `JAVA_HOME`, then `~/.jdks`, then the system default. Downloaded and processed data goes to `data/`, which git ignores. The notebooks are saved with their outputs, so they can also be read on GitHub without running anything.
+Reading HRRR's GRIB2 files needs the ecCodes library (`brew install eccodes` on macOS). Spark (notebook 08) needs a Java 17 or 21 runtime. Downloaded and processed data goes to `data/`, which git ignores. The notebooks are saved with their outputs, so they can also be read on GitHub without running anything.
 
 All data sources are public and read anonymously from NOAA's open data buckets on AWS.
 

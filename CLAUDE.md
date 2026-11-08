@@ -40,7 +40,7 @@ See `docs/plan.md` for each notebook's scope and what "done" looks like. Phase 1
 ## How to work in this repository
 
 ### Notebooks
-- Name notebooks `NN-short-kebab-name.ipynb` in `notebooks/`. Tool primers that use synthetic data are named `PN-short-kebab-name.ipynb`.
+- Name notebooks `NN-short-kebab-name.ipynb` in `notebooks/`.
 - Every notebook starts with Markdown cells that tell the story before any code: what the idea is, why it matters, and what to look for in the output. Write descriptively and plainly, as a story that flows, and explain every domain term the first time it appears. Avoid compact, list-only writing that leaves the reader to connect the ideas.
 - Write in a casual and direct tone with few commas. Comma-heavy sentences read choppy. Drop the comma after an opening phrase or before a trailing clause, and join an aside with a word like "that's" instead of setting it off with commas ("a pole that's about two metres off the ground"). Contractions are fine. Keep commas only for real lists or where a sentence would be misread without one. This applies to docs too.
 - Teach through a story, in the style of the *Learning WeatherBench 2* guide: the reader learns each concept at the moment the project needs it. Add new terms to `docs/glossary.md`, use short "In ML terms" blockquotes where an idea has an ML or engineering equivalent, and end with "What surprised me" and a few "Check yourself" questions with answers. Every plot uses real data.

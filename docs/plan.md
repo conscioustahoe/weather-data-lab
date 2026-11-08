@@ -124,26 +124,10 @@ The station table is small. Gridded data is not, and at scale the way an array i
 - **Rechunking:** convert it to an *analysis layout* (chunks shaped like long time series: all hours by small tiles) with dask and with xarray-beam, within a memory limit, through an intermediate layout. (The rechunker library is not used: it supports only Zarr format 2.)
 - **Measure:** time and bytes read for "one map at one hour" and "four years at one point" in each layout.
 - **xarray-beam:** compute an hourly climatology of the cube with Beam on the local runner, and compare with the same computation in plain xarray.
-- **Read first:** the P1 and P2 primers; Zarr's "Quickstart" and the pages on arrays, chunks, compression and sharding; the xarray-beam README and "Why xarray-beam".
+- **Read first:** Zarr's "Quickstart" and the pages on arrays, chunks, compression and sharding; the xarray-beam README and "Why xarray-beam".
 - **Done when:** the two layouts exist, the read-cost table shows why the layout must match the reader, and the notebook explains how the same steps would work for a petabyte dataset.
 
 ---
-
-## Tool primers
-
-Two notebooks teach the tools on synthetic data from `wxlab.synthetic`, independent of the project's progress.
-
-### P1 · Arrays primer
-
-xarray (dimensions, coordinates, `sel`/`isel`, pointwise selection, groupby, climatology and anomalies, area weighting), dask (chunks and lazy graphs), Zarr (chunk files, metadata, compression, append and region writes, the missing-chunk trap, sharding) and chunk layout (timed reads in a training and an analysis layout, rechunking directly and through an intermediate layout).
-
-### P2 · Pipelines primer
-
-Beam (pipelines, core transforms, combining before the shuffle; streaming with event time, windows, watermarks, triggers and allowed lateness, using TestStream), xarray-beam (keys and chunks, Rechunk, Mean, ChunksToZarr) and Spark (DataFrames, query plans and shuffles, window functions to find a stuck sensor, a broadcast join to find a step, partitioned Parquet and partition pruning, Structured Streaming with watermarks).
-
-### 00 · The map
-
-Written last: the chain from sensor to model and where each notebook sits on it.
 
 ## Project page
 
