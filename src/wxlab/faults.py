@@ -283,6 +283,10 @@ def plant(baseline: pd.DataFrame, catalogue: pd.DataFrame, seed=0) -> pd.DataFra
             raise ValueError(f.fault_type)
         out.loc[idx, "air_temperature"] = t
         out.loc[idx, "dew_point_temperature"] = d
+        if f.fault_type == "storm_gaps":
+            # The whole report is lost, so the station's own wind and rain go missing too.
+            # A check can't use the station itself to see that it missed a storm.
+            out.loc[idx[w], ["wind_speed", "precipitation_1h"]] = np.nan
         out.loc[idx[w], "fault_id"] = f.fault_id
         out.loc[idx[w], "fault_type"] = f.fault_type
         out.loc[idx[w], "is_faulty"] = True

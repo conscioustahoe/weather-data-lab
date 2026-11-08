@@ -1,0 +1,31 @@
+station_id,month,name,label,reason
+72585093228,2023-11,HAYWARD EXECUTIVE AIRPORT,fault,drops to about -18 °C for a few hours while neighbours and HRRR stay near 15 °C
+99847999999,2024-10,SAN FRANCISCO (PIER 1),weather,October 2024 heat wave; the pier runs hotter than HRRR in offshore wind
+72381603159,2021-02,GENERAL WILLIAM J. FOX AIRFIELD AIRPORT,weather,a few hours out of step with a fast temperature change
+72392793110,2022-02,OXNARD AIRPORT,weather,isolated hours during a fast change; timing difference
+99401299999,2022-02,CRESCENT CITY,weather,a few hours during a warm spell; station and neighbours both spiky
+99773499999,2024-10,TIBURON PIER,weather,October 2024 heat wave at a pier; neighbours also run warm
+99402399999,2023-07,PORT SAN LUIS,weather,a few hours of sea-breeze timing
+72594624286,2024-03,JACK MCNAMARA FIELD ARPT,fault,jumps to 31 °C for a few hours in March while neighbours say 12 °C
+72391093111,2021-10,POINT MUGU,weather,Santa Ana wind arriving at a different hour than in HRRR
+72491523259,2024-11,MONTEREY PENINSULA AIRPORT,fault,drops to -12 °C on and off for a day while neighbours say 10 °C
+99834099999,2022-04,SANTA BARBARA,weather,sundowner wind heat; very local and HRRR misses its peak
+72381523161,2022-07,BARSTOW-DAGGETT AIRPORT,weather,two isolated desert hours
+72492623258,2021-11,MDSTO CTY-CO H SHAM FD APT,fault,three hours near 30 °C on a late-November evening while neighbours say 21 °C
+74704303165,2022-02,EL MONTE AIRPORT,weather,gappy record; isolated hours during fast changes
+72297603166,2021-11,FULLERTON MUNICIPAL ARPT,unclear,sharp single-hour drops of 5-10 °C at night; could be cold-air drainage or a fault
+72292603154,2024-12,MARINE CORPS AIR STATION,weather,clear cold nights; the station cools faster than its neighbours
+72492723285,2022-03,LIVERMORE MUNICIPAL ARPT,weather,a few hours ahead of a warm-up
+99402399999,2023-04,PORT SAN LUIS,weather,heat spike at a coastal station; neighbours also warm
+72492723285,2022-09,LIVERMORE MUNICIPAL ARPT,unclear,isolated upward spikes of 8-10 °C over a few days
+72064600228,2021-09,HALF MOON BAY AIRPORT,weather,fog and sea-breeze changes at a coastal airport
+72289793206,2024-04,SAN LUIS CO REGIONAL ARPT,unclear,flat at 21 °C for several midday hours
+72396593209,2022-01,PASO ROBLES MUNICIPAL ARPT,unclear,warm spikes near 29 °C in January while neighbours say 15 °C; possibly local downslope wind
+99402399999,2024-09,PORT SAN LUIS,weather,September 2024 heat wave at a coastal station
+72290993115,2024-05,NAVAL AUXILIARY LANDING FD,fault,the known 2 °F stuck value
+99999993245,2022-02,BODEGA 6 WSW,weather,a few hours of coastal mixing
+72592024257,2022-02,REDDING MUNICIPAL AIRPORT,weather,a few hours of timing difference
+99402399999,2022-09,PORT SAN LUIS,weather,September 2022 heat wave at a coastal station
+72286023119,2022-02,MARCH AIR RESERVE BASE,weather,a few hours during cold mornings
+72291093116,2024-09,SAN NICOLAS ISLAND NAVAL OUTLYING FIELD,unclear,39 °C on an island during the September 2024 heat wave; no neighbours to compare
+72033353175,2024-10,CORONA MUNICIPAL AIRPORT,weather,two hours during a fast change
