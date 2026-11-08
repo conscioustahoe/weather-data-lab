@@ -16,7 +16,7 @@ Own one dataset end to end: hourly observations from about 165 California weathe
 
 **Phase 1 (notebooks 01, 03, 04, 05, 09)** builds the whole project on stations and the HRRR model. It is complete when the five items above exist.
 
-**Phase 2 (notebooks 02, 10, 06, 07, 08)** adds radar as a second kind of sensor, deepens monitoring, and rebuilds the pipeline with Ray, Spark and Beam. It does not start until phase 1 is complete.
+**Phase 2 (notebooks 02, 10, 06, 07, 08, 11)** adds radar as a second kind of sensor, deepens monitoring, rebuilds the pipeline with Ray, Spark and Beam, and works with gridded data at scale (xarray, Zarr, xarray-beam). It does not start until phase 1 is complete.
 
 ## How every notebook is written
 
@@ -28,6 +28,7 @@ The model is the *Learning WeatherBench 2* style: a story in which the reader le
 - Where an idea has an ML or engineering equivalent, add a short "In ML terms" blockquote.
 - End with "What surprised me", "In ML terms" for the notebook as a whole, and a few "Check yourself" questions with answers.
 - Use real data for every plot. Keep saved outputs small enough for GitHub to render.
+- Where a notebook introduces a tool, its plan below lists a short **Read first**: the few documentation pages that explain the tool's concepts and design, about 30–60 minutes. The notebook then uses the tool on project data. The docs give the vocabulary and the reasons behind the design; the notebook gives the practice.
 
 ---
 
@@ -51,6 +52,8 @@ To judge a station you need something independent to compare it with. The refere
 - **Which HRRR field:** the 1-hour forecast valid at each hour, not the analysis. HRRR's analysis is built partly from these same airport reports (data assimilation), so it is not independent of the stations and would hide station faults. A forecast made an hour earlier has not seen the observation. (The previous hour's observations did shape its starting point, so independence is improved, not perfect; this is stated in the notebook.)
 - **Period:** 2021–2024, every hour. HRRR's last major version change was in December 2020; earlier years mix model versions, and a version change looks like a step fault at every station at once.
 - **Matching:** take the HRRR value at each station's location, correct temperature for the height difference between the station and the model's terrain (about 6.5 °C per km), and store station value, HRRR value and difference per station-hour. Whole HRRR grids are never stored, only values at station points.
+- **Also kept:** the California crop of every hourly HRRR field (temperature and dew point), one compressed array per day, about 20 GB in total. It costs no extra download and is the raw material for notebook 11.
+- **Read first:** xarray's "Overview: Why xarray?", "Data structures" and "Indexing and selecting data" pages; Herbie's "Getting started".
 - **Code:** `wxlab.reference`.
 - **Done when:** the matched table exists; for most stations the difference is small and steady; the stations where it is not are explained (for example the coastal marine layer, which HRRR handles poorly).
 
@@ -111,6 +114,32 @@ Rebuild the phase 1 ingestion as a Ray pipeline: an immutable raw layer with a m
 ### 08 · Spark and Beam
 
 The station job in PySpark, a first Beam pipeline on the local runner, a look at xarray-beam for gridded data, and a comparison of Ray, Spark, Beam and Dask.
+
+### 11 · Gridded data at scale
+
+The station table is small. Gridded data is not, and at scale the way an array is cut into chunks decides what every read costs. This notebook uses the California HRRR crop kept by notebook 03 (every hour of 2021–2024 on the 3 km grid) as a real, mid-sized array.
+
+- **xarray:** build the cube as a labelled dataset (time, y, x) with coordinates and CF attributes.
+- **Zarr:** write it in a *training layout* (chunks shaped like maps: a day of hours by the whole of California), with compression; look at the chunk files on disk.
+- **Rechunking:** convert it to an *analysis layout* (chunks shaped like long time series: all hours by small tiles) with dask and with xarray-beam, within a memory limit, through an intermediate layout. (The rechunker library is not used: it supports only Zarr format 2.)
+- **Measure:** time and bytes read for "one map at one hour" and "four years at one point" in each layout.
+- **xarray-beam:** compute an hourly climatology of the cube with Beam on the local runner, and compare with the same computation in plain xarray.
+- **Read first:** the P1 and P2 primers; Zarr's "Quickstart" and the pages on arrays, chunks, compression and sharding; the xarray-beam README and "Why xarray-beam".
+- **Done when:** the two layouts exist, the read-cost table shows why the layout must match the reader, and the notebook explains how the same steps would work for a petabyte dataset.
+
+---
+
+## Tool primers
+
+Two notebooks teach the tools on synthetic data from `wxlab.synthetic`, independent of the project's progress.
+
+### P1 · Arrays primer
+
+xarray (dimensions, coordinates, `sel`/`isel`, pointwise selection, groupby, climatology and anomalies, area weighting), dask (chunks and lazy graphs), Zarr (chunk files, metadata, compression, append and region writes, the missing-chunk trap, sharding) and chunk layout (timed reads in a training and an analysis layout, rechunking directly and through an intermediate layout).
+
+### P2 · Pipelines primer
+
+Beam (pipelines, core transforms, combining before the shuffle; streaming with event time, windows, watermarks, triggers and allowed lateness, using TestStream), xarray-beam (keys and chunks, Rechunk, Mean, ChunksToZarr) and Spark (DataFrames, query plans and shuffles, window functions to find a stuck sensor, a broadcast join to find a step, partitioned Parquet and partition pruning, Structured Streaming with watermarks).
 
 ### 00 · The map
 

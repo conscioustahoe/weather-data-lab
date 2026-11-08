@@ -22,7 +22,9 @@ dependencies = [
 [project.optional-dependencies]
 reference = ["herbie-data", "cfgrib"]
 radar = ["arm-pyart"]
-pipelines = ["ray[data]", "pyspark", "apache-beam"]
+arrays = ["zarr>=3", "dask[array]"]
+# Beam's notebook and DataFrame support requires pandas below 2.4.
+pipelines = ["ray[data]", "pyspark", "apache-beam", "xarray-beam", "pandas>=2.2,<2.4"]
 model = ["lightgbm"]
 
 [tool.setuptools.packages.find]

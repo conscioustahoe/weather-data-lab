@@ -25,9 +25,9 @@ One dataset owned end to end: hourly observations from about 165 California weat
 
 See `docs/decisions.md` for the reasoning behind each one.
 
-- **Phases:** phase 1 is stations (NOAA ISD on AWS) plus the HRRR model; phase 2 adds radar (NEXRAD Level II and the MRMS mosaic) and rebuilds the pipeline with Ray, Spark and Beam. Phase 2 does not start until phase 1 is complete.
+- **Phases:** phase 1 is stations (NOAA ISD on AWS) plus the HRRR model; phase 2 adds radar (NEXRAD Level II and the MRMS mosaic), rebuilds the pipeline with Ray, Spark and Beam, and covers gridded data at scale (xarray, Zarr, xarray-beam). Phase 2 does not start until phase 1 is complete.
 - **Variables:** air temperature is the main variable; dew point is checked too; wind and precipitation are parsed as supporting data.
-- **Reference:** HRRR's 1-hour forecast (not the analysis, which assimilates the same station reports), read with Herbie, 2021–2024 to avoid earlier model-version changes. Only values at station points are stored.
+- **Reference:** HRRR's 1-hour forecast (not the analysis, which assimilates the same station reports), read with Herbie, 2021–2024 to avoid earlier model-version changes. Values at station points are stored, plus a California crop of the grid (2021–2024) for the gridded-data notebook.
 - **QA:** planted faults (step, drift, bias, stuck sensor, time offset, storm gaps) in 20–30% of stations at a range of sizes measure recall; hand-checked real flags measure precision; the three most suspicious real stations are investigated. Quarantine needs a second independent witness.
 - **Monitoring:** checks run month by month, recording metrics per run.
 - **Model impact:** gradient boosting predicting station temperature from HRRR, trained on clean, faulty, QA'd and randomly thinned data; test on clean 2024 and held-out stations; several seeds.
@@ -40,7 +40,7 @@ See `docs/plan.md` for each notebook's scope and what "done" looks like. Phase 1
 ## How to work in this repository
 
 ### Notebooks
-- Name notebooks `NN-short-kebab-name.ipynb` in `notebooks/`.
+- Name notebooks `NN-short-kebab-name.ipynb` in `notebooks/`. Tool primers that use synthetic data are named `PN-short-kebab-name.ipynb`.
 - Every notebook starts with Markdown cells that tell the story before any code: what the idea is, why it matters, and what to look for in the output. Write descriptively and plainly, as a story that flows, and explain every domain term the first time it appears. Avoid compact, list-only writing that leaves the reader to connect the ideas.
 - Teach through a story, in the style of the *Learning WeatherBench 2* guide: the reader learns each concept at the moment the project needs it. Add new terms to `docs/glossary.md`, use short "In ML terms" blockquotes where an idea has an ML or engineering equivalent, and end with "What surprised me" and a few "Check yourself" questions with answers. Every plot uses real data.
 - Between code sections, add short Markdown cells that explain what just happened and what the reader should notice.

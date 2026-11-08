@@ -34,7 +34,7 @@ Checks compare each station with an independent estimate of the same quantity. W
 
 **Why 2021–2024.** HRRR changed model versions several times (version 4 became operational in December 2020). Each change can shift the model's typical values, which would look like a step fault at every station at once. Starting in 2021 avoids that. A local timing test fetched one hourly field pair in about 2.6 seconds, so all hours of 2021–2024 (about 35,000 fetches) are practical with parallel downloads.
 
-**Storage.** Only HRRR values at station points are kept (under 1 GB). Full grids would be about 100 GB per variable for ten years and are never stored.
+**Storage.** HRRR values at station points are kept for the project (under 1 GB). Full continental grids would be about 100 GB per variable for ten years and are never stored. One deliberate exception: the California crop of the temperature and dew point fields for 2021–2024 (about 20 GB compressed) is kept, because the download already contains it and it is the raw material for learning gridded storage (Zarr, xarray-beam) in notebook 11. Without it, that notebook would need the same hours downloaded again.
 
 ## Learning QA through planted faults, tested on real data
 
@@ -57,3 +57,5 @@ Everything runs locally on one laptop, with no GPU. The data fits comfortably: a
 ## Framework depth
 
 Ray is learned in depth because it runs ordinary Python functions in parallel, which suits decoding scientific file formats and feeding training. Spark is learned at a working level on the station tables, where its table-oriented model fits. Beam is learned at a high level, with a first pipeline on the local runner and a look at xarray-beam, which large weather datasets have been built with. All three come in phase 2, rebuilding the phase 1 pipeline, so the frameworks are learned on a dataset that is already understood.
+
+xarray is learned from notebook 03 onward, since every HRRR file opens as an xarray dataset. Zarr and xarray-beam are learned in the P1 and P2 primers on synthetic data, then together in notebook 11 on a real four-year HRRR cube, because their purpose (choosing and changing how a large array is chunked) only shows up on data big enough for the choice to matter. Each tool comes with a short list of documentation pages to read first: the docs explain the concepts and design reasons, and the notebook provides the practice.

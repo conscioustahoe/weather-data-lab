@@ -24,7 +24,7 @@ Values are never deleted. Each check's flag is stored as its own column beside t
 
 **Phase 1: stations and a weather model.** Two public sources in two formats: NOAA station reports (CSV) and the HRRR weather model (GRIB2), matched station by station and hour by hour. Variables: air temperature and dew point, with wind and precipitation as supporting data.
 
-**Phase 2: radar and scale.** Radar adds a new kind of sensor, a new format and a new variable (precipitation), which makes it possible to check consistency between radar and station rain gauges. The same pipeline is then rebuilt with Ray, Spark and Beam.
+**Phase 2: radar and scale.** Radar adds a new kind of sensor, a new format and a new variable (precipitation), which makes it possible to check consistency between radar and station rain gauges. The same pipeline is then rebuilt with Ray, Spark and Beam, and four years of gridded HRRR data over California are stored and reorganised with Zarr and xarray-beam.
 
 ## The notebooks
 
@@ -43,6 +43,14 @@ Each notebook is one step of the project and one chapter of learning. It tells a
 | 06 | [Monitoring and verdicts](notebooks/06-monitoring-and-verdicts.ipynb) | 2 | Long-running monitoring, alerting, verdict history |
 | 07 | [Pipelines with Ray](notebooks/07-pipelines-with-ray.ipynb) | 2 | The same ingestion as a parallel, idempotent Ray pipeline |
 | 08 | [Spark and Beam](notebooks/08-spark-and-beam.ipynb) | 2 | The same job in Spark, a first Beam pipeline, and how the frameworks compare |
+| 11 | Gridded data at scale | 2 | xarray, Zarr and xarray-beam on four years of HRRR over California |
+
+Two **tool primers** teach the tools on synthetic data, so they can be read before or alongside the project notebooks:
+
+| # | Primer | What it covers |
+|---|---|---|
+| P1 | [Arrays](notebooks/P1-arrays-primer.ipynb) | xarray (labels, selection, groupby, climatology, weighting), dask, Zarr (chunks, compression, append and region writes, missing chunks), chunk layout and rechunking |
+| P2 | [Pipelines](notebooks/P2-pipelines-primer.ipynb) | Beam (transforms, streaming windows, watermarks, late data), xarray-beam (rechunking and reductions on chunked arrays), Spark (DataFrames, shuffles, window functions, joins, partitioned Parquet, Structured Streaming) |
 
 Reusable code lives in `src/wxlab/`, so the notebooks stay short. Reference notes live in `docs/`, including a running [glossary](docs/glossary.md).
 
@@ -51,10 +59,10 @@ Reusable code lives in `src/wxlab/`, so the notebooks stay short. Reference note
 The notebooks run locally on a laptop; no GPU is needed. Create an environment and install the package with its extras, then open the notebooks from the `notebooks/` folder:
 
 ```bash
-uv venv .venv && uv pip install -e ".[reference,radar,model]"
+uv venv .venv && uv pip install -e ".[reference,radar,model,arrays,pipelines]"
 ```
 
-Reading HRRR's GRIB2 files needs the ecCodes library (`brew install eccodes` on macOS). Downloaded and processed data goes to `data/`, which git ignores. The notebooks are saved with their outputs, so they can also be read on GitHub without running anything.
+Reading HRRR's GRIB2 files needs the ecCodes library (`brew install eccodes` on macOS). Spark needs a Java 17 or 21 runtime; the pipelines primer looks for `JAVA_HOME`, then `~/.jdks`, then the system default. Downloaded and processed data goes to `data/`, which git ignores. The notebooks are saved with their outputs, so they can also be read on GitHub without running anything.
 
 All data sources are public and read anonymously from NOAA's open data buckets on AWS.
 
