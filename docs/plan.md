@@ -144,3 +144,13 @@ Beam (pipelines, core transforms, combining before the shuffle; streaming with e
 ### 00 · The map
 
 Written last: the chain from sensor to model and where each notebook sits on it.
+
+## Project page
+
+Written last after notebook 09. One page in the style of the *Learning WeatherBench 2* guide that's quick to read and links to the notebooks in this repository wherever a reader wants the detail. It covers:
+
+- The project in a few lines: one dataset taken from raw archives to a training-ready table with a verdict on every station-hour.
+- The findings, led by the real ones: broken sensors that NOAA's checks passed, a NOAA flag that looks wrong, and the subtleties that make weather data hard (airport reporting minutes, whole-°F precision, coastal grid boxes, marine-layer inversions and cold-air pools).
+- The results: recall on planted faults by type and size, precision on real flags, and the clean vs faulty vs QA'd vs thinned model comparison.
+- The lessons, including the ingestion ones (connection reuse, idempotent units, keeping raw data immutable).
+- How the design would scale to petabytes. This part is described and not built: how each kind of sensor data would be stored (point time series, radar volumes and gridded fields), how ingestion and QA would run on a cluster and on a live feed, and what changes at that scale. It needs its own research before writing.
