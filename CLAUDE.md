@@ -17,29 +17,34 @@ The repository is public. Keep it about the subject matter. Do not add anything 
 5. How to design automated QA checks that run continuously over time, turn measurements into verdicts, and measure how often those verdicts are right.
 6. How to show, with a controlled experiment, that a cleaner or better dataset leads to better model performance.
 
+## The project
+
+One dataset owned end to end: hourly observations from about 165 California weather stations, 2021–2024, taken from raw public archives to a standardized, training-ready dataset with a quality verdict (pass, suspect, quarantine) on every station-hour. The verdicts are tested for accuracy (recall on planted faults, precision on hand-checked real flags) and for their effect on a model. A value is "good" if a model would learn the right thing from it.
+
 ## Decisions already made
 
 See `docs/decisions.md` for the reasoning behind each one.
 
-- **Two modalities:** surface stations (NOAA ISD on AWS; US airport stations via the Iowa Environmental Mesonet) and radar (NEXRAD Level II raw volumes and the MRMS national mosaic, both on AWS).
-- **Reference dataset:** HRRR, NOAA's hourly 3 km US model, read from AWS with the Herbie library. ERA5 from the Copernicus Climate Data Store is optional.
-- **Runtime:** Google Colab free tier. Notebooks must run there.
-- **How the QA skills are learned:** fault injection. Take clean data, inject known faults (step, drift, bias, stuck sensor, time offset, gaps during storms), build checks to catch them, measure precision and recall, then apply the same checks to real data.
-- **Monitoring:** simulated by feeding data through month by month and recording metrics per run.
-- **Model impact:** a small model (for example, gradient boosting predicting station temperature from HRRR) trained on clean, faulty and quality-checked data, compared on held-out time with several seeds.
-- **Starter scope:** about 200 California stations, 2 m temperature first, about 10 years. Widen only after the full path works end to end.
+- **Phases:** phase 1 is stations (NOAA ISD on AWS) plus the HRRR model; phase 2 adds radar (NEXRAD Level II and the MRMS mosaic) and rebuilds the pipeline with Ray, Spark and Beam. Phase 2 does not start until phase 1 is complete.
+- **Variables:** air temperature is the main variable; dew point is checked too; wind and precipitation are parsed as supporting data.
+- **Reference:** HRRR's 1-hour forecast (not the analysis, which assimilates the same station reports), read with Herbie, 2021–2024 to avoid earlier model-version changes. Only values at station points are stored.
+- **QA:** planted faults (step, drift, bias, stuck sensor, time offset, storm gaps) in 20–30% of stations at a range of sizes measure recall; hand-checked real flags measure precision; the three most suspicious real stations are investigated. Quarantine needs a second independent witness.
+- **Monitoring:** checks run month by month, recording metrics per run.
+- **Model impact:** gradient boosting predicting station temperature from HRRR, trained on clean, faulty, QA'd and randomly thinned data; test on clean 2024 and held-out stations; several seeds.
+- **Runtime:** everything runs locally on a laptop; no GPU. Notebooks are not designed for Colab.
 
 ## The plan
 
-The notebooks are numbered and meant to be done in order. See `docs/plan.md` for what each one covers and what "done" looks like. The first milestone is notebooks 01, 03, 04, 05 and 09 working end to end. Together they form a complete small project: ingest station data, compare it with a reference, inject and catch faults, and measure the effect on a model.
+See `docs/plan.md` for each notebook's scope and what "done" looks like. Phase 1 is notebooks 01, 03, 04, 05 and 09.
 
 ## How to work in this repository
 
 ### Notebooks
 - Name notebooks `NN-short-kebab-name.ipynb` in `notebooks/`.
 - Every notebook starts with Markdown cells that tell the story before any code: what the idea is, why it matters, and what to look for in the output. Write descriptively and plainly, as a story that flows, and explain every domain term the first time it appears. Avoid compact, list-only writing that leaves the reader to connect the ideas.
+- Teach through a story, in the style of the *Learning WeatherBench 2* guide: the reader learns each concept at the moment the project needs it. Add new terms to `docs/glossary.md`, use short "In ML terms" blockquotes where an idea has an ML or engineering equivalent, and end with "What surprised me" and a few "Check yourself" questions with answers. Every plot uses real data.
 - Between code sections, add short Markdown cells that explain what just happened and what the reader should notice.
-- The first code cell is the Colab setup cell (clone the repo, `pip install -e .`, mount Google Drive). Keep it identical across notebooks.
+- The first code cell is the setup cell (sets `DATA_DIR` to `../data`). Keep it identical across notebooks.
 - Keep notebooks thin. Reusable logic (parsers, matching, checks, metrics, fault injection) goes in `src/wxlab/` and is imported.
 - Keep saved outputs modest so GitHub can render the notebooks: a few plots, no huge tables.
 
@@ -48,7 +53,7 @@ The notebooks are numbered and meant to be done in order. See `docs/plan.md` for
 - Standardized data uses SI units, UTC timestamps and CF-style variable names (for example `air_temperature` in kelvin or degrees Celsius, stated explicitly).
 - Keep raw data immutable. Processing goes raw → standardized → QA outputs, with work split into idempotent units keyed by source and time (for example station and year).
 - Store quality flags beside the data. Never delete values because a check failed.
-- Data lives under `data/` locally (git-ignored) and under the mounted Drive folder on Colab. Never commit data.
+- Data lives under `data/` (git-ignored). Never commit data.
 - Read public AWS buckets anonymously (`s3fs` with `anon=True`, or `boto3` with unsigned config).
 
 ### Git

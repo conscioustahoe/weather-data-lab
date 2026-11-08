@@ -1,43 +1,59 @@
 # Decisions
 
-This file records the choices made for the lab and why. When a decision changes, update it here and note the change in the learning log.
+The choices made for the lab and why. When a decision changes, this file is rewritten to state the current decision, and the change is noted in the learning log.
 
-## Two modalities: surface stations and radar
+## One project, owned end to end
 
-There are many kinds of physical sensor data: surface stations, weather balloons, aircraft reports, radar, satellite imagery, hyperspectral sounders, lidar and radio occultation. Learning a few of them well is more useful than skimming all of them, because the skills transfer.
+The lab is organized around one dataset rather than a tour of topics. Hourly observations from about 165 California weather stations are taken from raw archives to a training-ready dataset with a quality verdict on every value, and the verdicts are tested for accuracy and for their effect on a model. Every notebook is a step of that project. A single concrete dataset forces the hard questions (what exactly counts as wrong, how sure are we, does it matter) that a survey of topics lets you skip.
 
-Surface stations come first because they are the most direct measurement. A thermometer measures the air it sits in, with little processing between the sensor and the number. That makes them the clearest place to learn what bias, drift and step changes look like. They are also exactly what people mean by "sparse sensors": accurate at a few points, absent everywhere else.
+## What "quality" means
 
-Radar comes second because it is the opposite. It measures indirectly (how much of a microwave pulse bounces back), it has an unusual geometry (polar coordinates around each radar site, with the beam rising above the curving Earth), and it has a rich set of artifacts: ground clutter, anomalous propagation, bird and insect echoes, beam blockage and calibration differences between radars. Radar and stations also overlap, because radar estimates rainfall and many stations have rain gauges. That overlap makes it possible to measure consistency across sources.
+A value is good if a model would learn the right thing from it. This ties quality to use: a value can be what the sensor reported and still be bad training data, for example during a timestamp mix-up. Each check is a written rule. Verdicts are pass, suspect or quarantine per station-hour; each check's flag is stored beside the data; nothing is deleted. Quarantine requires evidence from two independent sources (for example the reference model and neighboring stations), because each source has weaknesses of its own.
 
-Both are free on NOAA's open data buckets on AWS and need no account.
+## Two phases, stations first
 
-## Reference dataset: HRRR, with ERA5 optional
+There are many kinds of physical sensor data; learning a few well is more useful than skimming many, because the skills transfer.
 
-Quality checks on station data rely on comparing each station with an independent estimate of the same quantity. Weather happens in both the station and the reference, so it cancels when you subtract one from the other, and what remains is the station's own error.
+**Phase 1 uses surface stations and a weather model.** A thermometer measures the air it sits in, with little processing between the sensor and the number. That makes stations the clearest place to learn what bias, drift and step changes look like. Pairing them with a gridded model adds a second source and a second format (GRIB2).
 
-HRRR (the High-Resolution Rapid Refresh) is NOAA's hourly model analysis for the United States at 3 km resolution. It is free on AWS with no account and no queue. The Herbie library downloads only the variables you ask for, which keeps transfers small. For a US-only lab it is a better fit than ERA5, which is global but coarser at about 30 km.
+**Phase 2 adds radar.** Radar is the opposite of a station: indirect, three-dimensional and full of artifacts (ground clutter, anomalous propagation, birds and insects, beam blockage, calibration differences between radars). Radar estimates rainfall and many stations have rain gauges, so the two can be checked against each other. Radar is not part of phase 1 because learning its formats and artifacts properly takes days, and a rushed radar notebook would weaken both phases.
 
-ERA5 remains useful for comparison. The public cloud copy of ERA5 is stored with one chunk per hour covering the whole globe, so reading a long time series at a few points from it means downloading hundreds of gigabytes. The Copernicus Climate Data Store lets you request a small region instead, with a free account and a queue.
+The Iowa Environmental Mesonet also serves US airport station data, but it reports the same sensors as ISD, so it is not an independent cross-check. It is not used.
 
-## Runtime: Google Colab
+## Variables
 
-Colab's free tier is enough for this scope. Data is read anonymously from AWS, the libraries install with pip, Ray runs on a single machine and Beam's local runner works. PySpark needs Java, which may require one `apt-get` command.
+Air temperature is the main variable: it is checked, predicted and scored. HRRR has a direct counterpart (2 m temperature), and temperature is smooth enough that faults stand out. Dew point is checked too; it can never exceed the air temperature, which gives a real physical check across two variables. Wind and precipitation are parsed as supporting data, to define storm hours and to see whether data goes missing when the weather is extreme. All of them come from the same ISD files.
 
-Colab sessions are temporary, so processed data is saved to Google Drive. Memory is limited to about 12 GB, so processing is done one station or one file at a time.
+## Reference: the HRRR 1-hour forecast, 2021 onward
 
-## Learning QA through fault injection
+Checks compare each station with an independent estimate of the same quantity. Weather affects both the station and the reference, so it cancels when one is subtracted from the other; what remains is mostly the station's own error plus representativeness error (a point measurement and a 3 km grid cell disagree even when both are right).
 
-The fastest way to learn what subtle data problems look like is to create them on purpose. Starting from clean data, the lab injects known faults: a step change, a slow drift, a constant bias, a stuck sensor, a local-time offset and gaps that cluster during storms. Because the faults are known, every check can be scored by how many real problems it catches (recall) and how many of its flags are real (precision). After that, the same checks run on real data, where the answers are unknown and each flag has to be investigated.
+**Why HRRR.** HRRR (the High-Resolution Rapid Refresh) is NOAA's hourly 3 km model for the US, free on AWS with no account. The Herbie library downloads only the fields requested. ERA5 is global but about 30 km, and reading long series at points from its public cloud copy means downloading hundreds of gigabytes, because it is stored one whole-globe hour per chunk.
 
-## Monitoring simulated month by month
+**Why the 1-hour forecast and not the analysis.** HRRR's analysis is produced by data assimilation, which pulls the model toward observations, including these same airport reports. Using it would partly compare stations with themselves: faults would be damped in the checks, and in the model experiment the input would already contain the target. The forecast valid at the same hour, started one hour earlier, has not seen that observation. Independence is improved rather than perfect, because the previous hour's observations shaped the forecast's starting point. The same issue applies to ERA5, which also assimilates station data.
 
-A real pipeline sees data arrive over time, not all at once. The lab simulates this by feeding data through one month at a time and recording quality metrics for each run. The history of those metrics is the monitoring view, and alerts fire when a metric changes.
+**Why 2021–2024.** HRRR changed model versions several times (version 4 became operational in December 2020). Each change can shift the model's typical values, which would look like a step fault at every station at once. Starting in 2021 avoids that. A local timing test fetched one hourly field pair in about 2.6 seconds, so all hours of 2021–2024 (about 35,000 fetches) are practical with parallel downloads.
+
+**Storage.** Only HRRR values at station points are kept (under 1 GB). Full grids would be about 100 GB per variable for ten years and are never stored.
+
+## Learning QA through planted faults, tested on real data
+
+Faults are planted into clean data because a known answer is the only way to measure recall: how many problems a check misses. The setup avoids the usual traps. The baseline is screened first, because real data already contains unrecorded faults that would otherwise be counted as false alarms. Faults go into a realistic minority of stations (20–30%), so precision is not inflated. Each fault type is planted at a range of sizes, because detection depends strongly on size. Detections are scored per station-month within a tolerance of the true start.
+
+Planted faults cannot measure precision on real data or produce real findings, so the same checks also run on the real data, a sample of flags is checked by hand, and the three most suspicious stations are investigated.
 
 ## Measuring the effect on a model
 
-A small model predicts station temperature from the surrounding HRRR fields. It is trained three ways: on clean data, on data with injected faults, and on the faulty data after QA has quarantined what it caught. The gap between the first two shows how much each fault hurts. The gap between the last two shows how much QA recovers. Comparisons use held-out time periods and several random seeds, so that differences can be told apart from run-to-run noise.
+A small gradient-boosting model predicts station temperature from HRRR fields, a form of post-processing. It is trained on clean, faulty, QA'd and randomly thinned data, with everything else fixed. The random-thinning arm is the control: without it, an improvement from QA could simply come from training on less data. Faults are planted only in the training years; the test year (2024) and a set of held-out stations stay clean. Results use several random seeds, so differences can be told apart from run-to-run noise.
+
+## Notebooks teach through a story
+
+Each notebook follows the style of the *Learning WeatherBench 2* guide: the reader learns each concept at the moment the project needs it, in flowing prose, with every term explained where it first appears, "In ML terms" bridges, and "Check yourself" questions. The point is that someone new to weather data can follow the whole project and come out understanding the domain.
+
+## Runtime: a laptop
+
+Everything runs locally on one laptop, with no GPU. The data fits comfortably: about 10 GB of raw station files, under 300 MB of standardized station data and under 1 GB of HRRR values at station points. Notebooks are saved with their outputs so they can be read on GitHub without running them. Colab is not a target: long background downloads and a local cache suit a laptop better than temporary cloud sessions.
 
 ## Framework depth
 
-Ray is learned in depth because it runs ordinary Python functions in parallel, which suits decoding scientific file formats and feeding training. Spark is learned at a working level on the station tables, where its table-oriented model fits. Beam is learned at a high level, with a first pipeline on the local runner and a look at xarray-beam, which large weather datasets have been built with.
+Ray is learned in depth because it runs ordinary Python functions in parallel, which suits decoding scientific file formats and feeding training. Spark is learned at a working level on the station tables, where its table-oriented model fits. Beam is learned at a high level, with a first pipeline on the local runner and a look at xarray-beam, which large weather datasets have been built with. All three come in phase 2, rebuilding the phase 1 pipeline, so the frameworks are learned on a dataset that is already understood.

@@ -1,91 +1,117 @@
 # Plan
 
-The lab follows one dataset's journey from sensor to model. Each notebook is one step of that journey, and each one builds on the outputs of the ones before it. This file describes what every notebook covers, what data it uses and what "done" looks like.
+## Goal
 
-The first milestone is a complete small project made of notebooks 01, 03, 04, 05 and 09: ingest station data, compare it with a reference, inject and catch faults, and measure the effect on a model. The other notebooks deepen it.
+Own one dataset end to end: hourly observations from about 165 California weather stations, 2021–2024, taken from raw public archives to a standardized, training-ready dataset in which every value carries a quality verdict, and show with numbers how accurate those verdicts are and what they change for a model.
+
+"Done" for the project means five things exist:
+
+1. **The pipeline.** Raw files kept untouched, a standardized layer and a QA layer, built in small rerunnable units keyed by station and time.
+2. **The dataset.** One row per station-hour: temperature, dew point, the HRRR reference values, each check's flag and a verdict. Nothing deleted.
+3. **A monitoring history.** Checks run one month at a time, as a live pipeline would, with metrics recorded per run.
+4. **A report card for the verdicts.** Recall per check on planted faults (by fault type and size), precision per check on a hand-checked sample of real flags, and three real problem stations explained with evidence.
+5. **The model result.** Error of a model trained on clean, faulty, QA'd and randomly thinned data, with seed-to-seed spread, on held-out years and held-out stations.
+
+## Phases
+
+**Phase 1 (notebooks 01, 03, 04, 05, 09)** builds the whole project on stations and the HRRR model. It is complete when the five items above exist.
+
+**Phase 2 (notebooks 02, 10, 06, 07, 08)** adds radar as a second kind of sensor, deepens monitoring, and rebuilds the pipeline with Ray, Spark and Beam. It does not start until phase 1 is complete.
+
+## How every notebook is written
+
+The model is the *Learning WeatherBench 2* style: a story in which the reader learns each concept at the moment the project needs it. Concretely:
+
+- Open with what this step of the project is, why it matters and what to look for in the output, in flowing prose.
+- Explain every new term where it first appears, in plain words, and add it to `docs/glossary.md`.
+- After each code section, say what just happened and what to notice.
+- Where an idea has an ML or engineering equivalent, add a short "In ML terms" blockquote.
+- End with "What surprised me", "In ML terms" for the notebook as a whole, and a few "Check yourself" questions with answers.
+- Use real data for every plot. Keep saved outputs small enough for GitHub to render.
 
 ---
 
-## 00 · The map
+## Phase 1
 
-A short orientation. It describes the chain from a physical sensor to a trained model (sensor, source, decode, standardize, quality checks, training data, model, and the experiment that decides whether the data helped) and shows where each notebook sits on that chain. No data.
+### 01 · Stations: read and explore
 
-**Done when:** a reader who knows ML but not weather understands why each step exists.
+Weather stations are the most direct sensor there is, so they come first. This notebook reads hourly reports for the California stations from NOAA's Integrated Surface Database (ISD), decodes every field it uses from the ISD format document, and explores the result.
 
-## 01 · Stations: read and explore
+- **Data:** ISD (`noaa-global-hourly-pds` on AWS, anonymous) and NOAA's station list `isd-history.csv`. All of 2015–2024 is ingested; later notebooks use 2021–2024.
+- **Fields:** air temperature, dew point, wind speed and one-hour precipitation, each with its scaling, missing-value code and NOAA quality code.
+- **Key rule:** several report types share each hour (routine METAR at about minute 51, special reports when the weather changes, synoptic reports on the hour, daily and monthly summaries). The standardized table keeps one report per station-hour by a written rule: drop summaries, assign each report to the nearest hour, prefer the routine report closest to the hour. The chosen report's time and type are kept for auditing.
+- **Code:** `wxlab.stations`.
+- **Output:** one Parquet file per station-year, one row per station-hour, UTC, °C and m/s and mm.
+- **Done when:** all stations are standardized, the notebook explains every field, shows coverage, the daily and seasonal cycles at coast, desert and mountain stations, previews two quality questions (dew point above temperature; missing data in storm hours), and records what was surprising.
 
-Weather stations are the most direct sensors there are, so they are the right place to start. This notebook reads hourly observations for a set of California stations from NOAA's Integrated Surface Database (ISD) on AWS, guided by the ISD format document. It explains every field used: temperature stored in tenths of a degree Celsius, `+9999` meaning missing, and the quality code attached to every value. It then looks at the data: plots for a few stations, gaps, the daily and seasonal cycles, and the station list with locations, elevations and active dates.
+### 03 · Matching to a reference
 
-- **Data:** NOAA ISD (`noaa-global-hourly-pds` on AWS, anonymous); NOAA's station list `isd-history.csv`. Optionally, US airport (ASOS) data from the Iowa Environmental Mesonet.
-- **Code to write:** `wxlab.stations` (station list filtering, download, parsing into a standardized table).
-- **Output:** standardized Parquet, one row per station and hour, with UTC time, temperature in °C and the original quality code.
-- **Done when:** about 200 California stations with long records are parsed for 2015–2024, and the notebook explains what each field means and what surprised you.
-- **References:** [ISD on AWS](https://registry.opendata.aws/noaa-isd), [ISD format document](https://www.ncei.noaa.gov/data/global-hourly/doc/isd-format-document.pdf).
+To judge a station you need something independent to compare it with. The reference is HRRR, NOAA's hourly 3 km weather model for the US.
 
-## 02 · Radar: read and explore
+- **Which HRRR field:** the 1-hour forecast valid at each hour, not the analysis. HRRR's analysis is built partly from these same airport reports (data assimilation), so it is not independent of the stations and would hide station faults. A forecast made an hour earlier has not seen the observation. (The previous hour's observations did shape its starting point, so independence is improved, not perfect; this is stated in the notebook.)
+- **Period:** 2021–2024, every hour. HRRR's last major version change was in December 2020; earlier years mix model versions, and a version change looks like a step fault at every station at once.
+- **Matching:** take the HRRR value at each station's location, correct temperature for the height difference between the station and the model's terrain (about 6.5 °C per km), and store station value, HRRR value and difference per station-hour. Whole HRRR grids are never stored, only values at station points.
+- **Code:** `wxlab.reference`.
+- **Done when:** the matched table exists; for most stations the difference is small and steady; the stations where it is not are explained (for example the coastal marine layer, which HRRR handles poorly).
 
-Radar is the opposite of a station: indirect, three-dimensional and full of artifacts. This notebook opens raw NEXRAD Level II volumes for a California radar with Py-ART, explains reflectivity, radial velocity and the dual-polarization fields, and shows the polar geometry of a volume scan. It then looks for artifacts on purpose: ground clutter near the radar, echoes from birds and insects at dusk, and wedges blocked by terrain. It uses the correlation coefficient field to separate weather from non-weather echoes, then compares a raw volume with MRMS, NOAA's quality-controlled national mosaic, to see what that processing removed.
+### 04 · How data goes wrong
 
-- **Data:** NEXRAD Level II (`noaa-nexrad-level2` on AWS, anonymous); MRMS (on AWS, anonymous).
-- **Code to write:** `wxlab.radar` (listing, downloading and reading volumes; simple masks).
-- **Done when:** you can explain each artifact from a plot of real data, and what MRMS does differently from the raw volume.
-- **References:** [NEXRAD on AWS](https://registry.opendata.aws/noaa-nexrad), [MRMS on AWS](https://registry.opendata.aws/noaa-mrms-pds), [Py-ART](https://arm-doe.github.io/pyart/).
+Faults are planted into a clean copy of the data so that every check can be scored against a known answer.
 
-## 03 · Matching to a reference
+- **Clean baseline first:** keep stations that are nearly complete and whose difference from HRRR is steady over the four years. The real data is not perfectly clean, so this baseline reduces, but does not remove, unknown real faults.
+- **Fault types:** step (instrument swap), slow drift (aging sensor), constant bias (poor siting), stuck sensor, time offset, and gaps that cluster in storm hours (defined from the wind and precipitation fields).
+- **Realistic setup:** faults go into 20–30% of stations, the rest stay untouched, so checks can raise false alarms. Each fault type is planted at a range of sizes, so results become "detection rate against fault size" rather than one number that depends on an arbitrary choice.
+- **Train/test separation for notebook 09:** faults are planted only in 2021–2023. 2024 stays clean.
+- **Code:** `wxlab.faults` (one function per fault type, each returning the faulty series and a ground-truth label).
+- **Done when:** the labeled dataset exists, and each fault type has a plot (raw and as a difference from HRRR) and a sentence on why it would mislead a model.
 
-To check a station you need something independent to compare it with. This notebook pulls HRRR 2 m temperature for each station's location and hour, interpolates it to the station, and corrects for the height difference between the station and the model's terrain (about 6.5 °C per kilometer). It explains representativeness error, which is why a point measurement and a 3 km grid cell disagree even when both are right, and why the checks react to changes in the difference rather than to the difference itself.
+### 05 · QA checks and metrics
 
-- **Data:** HRRR analyses on AWS through Herbie; the station table from notebook 01.
-- **Code to write:** `wxlab.reference` (fetching HRRR, matching by time and place, height correction).
-- **Output:** a table of station value, reference value and difference, per station and hour.
-- **Done when:** for most stations the difference is small and stable, and you can explain the stations where it isn't.
-- **References:** [HRRR on AWS](https://registry.opendata.aws/noaa-hrrr-pds), [Herbie](https://herbie.readthedocs.io).
+The checks, the verdicts, and how good they are.
 
-## 04 · How data goes wrong
+- **Check layers, cheap to subtle:** structural (parses, units, coordinates), physical (possible values; dew point not above temperature), climatological (plausible for this place and season), stuck sensor, spatial (agreement with neighboring stations), reference (difference from HRRR), and temporal (changepoints and drift in the monthly station-minus-HRRR series).
+- **A second witness:** a station disagreeing with HRRR alone is "suspect", not "quarantine". Quarantine needs agreement from a second source, usually neighboring stations, because HRRR has its own weaknesses.
+- **Verdicts:** pass, suspect, quarantine, per station-hour, with each check's flag stored as a column.
+- **Monitoring:** the checks run one month at a time, as a scheduled job would, and each run records coverage, flag rates and verdict counts.
+- **Scoring:** a detection counts if it names the right station and lands within a set tolerance of the true fault start, scored per station-month. Recall per check and fault type, against fault size. Precision on injected data, and separately on a hand-checked sample of real flags.
+- **Expected limits, stated up front:** a constant bias that has always been there looks the same as a real local effect and is mostly undetectable without metadata or neighbors.
+- **Real data:** run the checks on the real 2021–2024 data and investigate the three most suspicious stations, using the data and NOAA's station metadata.
+- **Code:** `wxlab.qa`.
+- **Done when:** the verdict table, the monitoring history, the precision and recall tables, and three explained real stations exist.
 
-Before building checks, learn what the problems look like. This notebook takes clean station data and injects known faults: a step change (an instrument swap), a slow drift (an aging sensor), a constant bias (poor siting), a stuck sensor, a local-time offset and gaps that cluster during extreme weather. Each fault is plotted next to the clean series, both raw and as a difference from the reference, so you can see why subtracting a reference makes faults visible that are invisible in the raw data.
+### 09 · Does clean data help the model?
 
-- **Code to write:** `wxlab.faults` (one function per fault type, each returning the faulty series and a ground-truth label).
-- **Output:** a labeled dataset in which the faulty stations, fault types and start times are known.
-- **Done when:** each fault type has a plot and a sentence explaining why it would hurt a model.
+A controlled experiment. A small model (gradient boosting) predicts station temperature from HRRR fields and simple time and place features. This is a form of what forecasters call post-processing: learning corrections to a weather model from past errors.
 
-## 05 · QA checks and metrics
+- **Four training sets, everything else fixed:** clean; faulty; faulty with QA quarantine removed; faulty with the same number of station-months removed at random.
+- **Split:** train on 2021–2022, tune on 2023, test on 2024 (clean), plus a set of held-out stations never seen in training.
+- **Metrics:** RMSE and bias against clean test data, several random seeds, broken down by fault type and station. A version that predicts a range (quantiles) is scored with CRPS if time allows.
+- **Done when:** a results table with seed-to-seed spread shows which faults hurt this model most, whether QA closes the gap, and whether QA beats random removal.
 
-This notebook builds the checks, in layers from cheap to subtle: structural (does it parse, are units and coordinates right), physical (is the value possible), climatological (is it plausible for this place and season), spatial (does it agree with neighboring stations), reference (how it compares with HRRR) and temporal (changepoint detection on the monthly station-minus-reference series, and drift tests). It defines the three quality metrics: coverage, correctness and consistency. It then scores every check against the injected faults with precision and recall, and finally runs the checks on the real, uninjected data and investigates the three most suspicious stations.
+---
 
-- **Code to write:** `wxlab.qa` (one module per check layer; metrics; a report card).
-- **Done when:** you have a precision and recall table per check on the injected data, and three real stations with an evidence-backed explanation of what probably happened to each.
-- **References:** [ruptures](https://centre-borelli.github.io/ruptures-docs/) for changepoint detection.
+## Phase 2
 
-## 06 · Monitoring and verdicts
+### 02 · Radar: read and explore
 
-A real pipeline sees data arrive over time. This notebook feeds the data through one month at a time and runs the checks on each new month, the way a scheduled job would. Every run writes its metrics to a table, and the history of that table is the monitoring view. Each check's result becomes a verdict (pass, warn, quarantine or block) with a defined action. Flags are stored beside the data rather than deleting it. A hand-labeled sample of flags measures how often each check is right, which is what owning a check's verdicts means in practice.
+Raw NEXRAD Level II volumes for a California radar, read with Py-ART: reflectivity, radial velocity, dual-polarization fields and the polar volume geometry. Look for artifacts on purpose (ground clutter, birds and insects at dusk, terrain blockage), and compare a raw volume with MRMS, NOAA's quality-controlled national mosaic.
 
-- **Code to write:** `wxlab.monitor` (incremental runs, metrics history, verdict rules, alerting on changes).
-- **Done when:** you can show a metric changing over time, the alert it triggered and each check's measured precision.
+### 10 · Radar vs gauges
 
-## 07 · Pipelines with Ray
+Compare MRMS radar rainfall with station rain gauges over the same hours, by distance from the radar, terrain and rain type, and turn the comparison into a daily consistency metric. Rain is scored with methods built for it (for example SEEPS), not RMSE.
 
-The ingestion from notebook 01, rebuilt as a pipeline: an immutable raw layer with a manifest, work split into idempotent units keyed by station and year, and Ray running the units in parallel. It shows a backfill and an incremental run using the same code, and explains how the design would scale to a cluster and to a live feed (event time, watermarks, late and corrected data).
+### 06 · Monitoring and verdicts
 
-- **Do first:** the official [Ray Data getting started](https://docs.ray.io/en/latest/data/data.html) and Ray Core tasks tutorials.
-- **Done when:** rerunning any unit gives identical output, and a failed unit can be retried safely.
+Extend phase 1's monthly runs into a full monitoring view: metric history, alerts on changes, verdict history per station, and how verdicts get reviewed and corrected over time.
 
-## 08 · Spark and Beam
+### 07 · Pipelines with Ray
 
-The same station job in PySpark (deduplicate, compute completeness per station, write partitioned Parquet), then a first Apache Beam pipeline on the local runner and a look at xarray-beam for gridded data. It ends with a comparison of Ray, Spark, Beam and Dask: their mental models, what each is best at for weather data and their tradeoffs.
+Rebuild the phase 1 ingestion as a Ray pipeline: an immutable raw layer with a manifest, idempotent units, a backfill and an incremental run sharing the same code, and how the design would scale to a cluster and a live feed.
 
-- **Do first:** [Spark Quick Start](https://spark.apache.org/docs/latest/quick-start.html) and [Tour of Beam](https://tour.beam.apache.org/).
-- **Done when:** you can explain in two minutes which framework you would pick for stations, radar and gridded data, and why.
+### 08 · Spark and Beam
 
-## 09 · Does clean data help the model?
+The station job in PySpark, a first Beam pipeline on the local runner, a look at xarray-beam for gridded data, and a comparison of Ray, Spark, Beam and Dask.
 
-A controlled experiment. A small model (gradient boosting) predicts station temperature from the surrounding HRRR fields. It is trained three ways: on clean data, on data with the injected faults, and on the faulty data after QA has quarantined what it caught. Everything else stays fixed. It is evaluated on held-out years with several random seeds, and results are broken down by fault type and by station. The gap between clean and faulty shows how much each fault hurts the model; the gap between faulty and QA'd shows how much the checks recover.
+### 00 · The map
 
-- **Done when:** you have a results table with seed-to-seed spread, and you can say which fault types matter most for this model and whether QA closes the gap.
-
-## 10 · Radar vs gauges (stretch)
-
-Consistency across sources. This notebook compares radar-estimated rainfall (MRMS) with rain gauges at stations, over the same hours. It looks at how the agreement changes with distance from the radar, terrain and rain type, and turns the comparison into a consistency metric that could run every day.
-
-- **Done when:** you can show where radar and gauges disagree and explain why.
+Written last: the chain from sensor to model and where each notebook sits on it.
