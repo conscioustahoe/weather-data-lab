@@ -21,13 +21,16 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Completeness** | The fraction of expected time steps that have a value. The simplest coverage metric. | 01 |
 | **Consistency** | Whether a source agrees with independent sources and with its own past. | 05 |
 | **Correctness** | Whether the values that are present are right. | 05 |
+| **Correlation coefficient (ρHV)** | A dual-polarization field that compares the horizontal and vertical echoes pulse by pulse. Rain gives values above about 0.97; birds, insects, clutter and waves give much lower values. | 02 |
 | **Coverage** | Whether the data is there: completeness overall and per condition, such as storm hours. | 05 |
 | **Data assimilation** | Combining a model's background with observations, weighting each by its reliability, to estimate the current state. | 03 |
 | **Detection lag** | How long after a fault starts a scheduled check first raises an alarm. | 05 |
 | **Dew point** | The temperature to which air must cool for its water vapour to start condensing. Never higher than the air temperature. | 01 |
 | **Diurnal cycle** | The daily rise and fall of temperature, from a minimum near dawn to a maximum in mid-afternoon. | 01 |
 | **Drift** | A sensor error that grows slowly over months, as with an ageing sensor or a dirty radiation shield. | 04 |
+| **Dual polarization** | Sending radar pulses in two orientations (horizontal and vertical) at once, so the radar can tell the shape and type of what it sees. | 02 |
 | **Duplicate station** | One physical station carried under two ids in an archive, for example after a base is renamed. Not an independent witness. | 04 |
+| **4/3 Earth model** | The standard way to work out a radar beam's height: the air bends the beam down slightly, which is the same as a straight beam over an Earth a third larger. | 02 |
 | **Fault catalogue** | The answer key for planted faults: which station, which type, what size, and when each fault starts, ends and actually touches the data. | 04 |
 | **FM-12 (SYNOP)** | The international synoptic report exchanged between weather services every 3 or 6 hours, on the hour. | 01 |
 | **FM-13** | The marine version of the synoptic report, used by ships, buoys and coastal stations. | 01 |
@@ -47,30 +50,43 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Keep-alive (HTTP)** | Reusing one network connection for many requests instead of opening a new one each time. | 03 |
 | **Lambert conformal projection** | A map projection made by laying a cone over a region; keeps shapes nearly right in mid-latitudes. HRRR's grid uses it. | 03 |
 | **Lapse rate** | How fast air temperature falls with height, about 6.5 °C per kilometre on average. | 01 |
+| **Level II** | The raw output of a NEXRAD radar: every field at every range gate, one file per volume scan. | 02 |
 | **MAD (median absolute deviation)** | The median distance of values from their median. Times 1.4826 it estimates the standard deviation without being stretched by outliers. | 05 |
 | **Marine layer / inversion** | Cool, moist ocean air near the surface with warmer air above it. Temperature rises with height instead of falling, so the standard lapse rate does not apply. | 03 |
 | **Missing not at random** | Data whose chance of being missing depends on the value or the conditions, like readings lost in storms. Dropping those rows biases what a model learns. | 04 |
+| **MRMS** | Multi-Radar Multi-Sensor: NOAA's national mosaic that merges every US radar onto a 1 km grid, removes non-weather echoes and estimates rainfall, with and without rain gauges. | 02 |
+| **NEXRAD (WSR-88D)** | The US network of about 160 weather radars run by NOAA, the FAA and the Air Force. | 02 |
+| **Non-weather echo** | Radar echo from things that aren't precipitation: ground and sea clutter, birds, insects, wind farms. | 02 |
+| **Nyquist velocity** | The fastest speed a Doppler radar can measure unambiguously. Faster motion folds over and shows up with the wrong speed and sign. | 02 |
 | **Oracle (arm)** | An experiment arm that uses knowledge no real system has, here exactly which hours were faulty. It shows the best a method of that kind could do. | 09 |
 | **Planted fault** | A known error added on purpose to a copy of good data so a check's recall can be measured. Also called fault or anomaly injection. | 04 |
 | **Post-processing** | Learning a correction to a weather model's output from its past errors, for example a station's typical difference from HRRR by hour and season. | 09 |
 | **Precision** | The share of a check's alarms that point at real problems. | 04 |
 | **Quality code (ISD)** | A one-character flag NOAA attaches to every value: `1`/`5` passed, `2`/`6` suspect, `3`/`7` erroneous, `9` missing, plus letters for special cases. Evidence, not truth. | 01 |
+| **Radial velocity** | The speed of targets toward or away from the radar, from the Doppler shift. Motion across the beam is invisible. | 02 |
 | **Random thinning** | The control arm: remove as much data as QA did but at random. If QA only beats faulty data by having less data, random thinning does just as well. | 09 |
+| **Range gate** | One slot of distance along a ray (250 m for NEXRAD). The radar reports one value per gate. | 02 |
 | **Range request** | An HTTP request for a specific span of bytes of a file. | 03 |
 | **Recall** | The share of real problems a check catches. Needs a known list of problems, which is why faults are planted. | 04 |
 | **Reference segment** | The segment every other segment is lined up with in homogenization, by convention the newest. If the newest segment is the broken one, adjusting to it spreads the fault backwards. | 09 |
+| **Reflectivity (dBZ)** | How much energy comes back to the radar, on a log scale. Light rain is around 20 dBZ and heavy rain 45 or more. | 02 |
 | **Representativeness error** | The honest disagreement between a point measurement and a grid-box average, even when both are right. | 03 |
 | **RMSE** | Root mean squared error: the typical size of a difference, with large misses counting extra. | 03 |
 | **Robust z-score** | Distance from the median in units of the MAD-based standard deviation. Used for thresholds so faults don't inflate their own yardstick. | 05 |
 | **Santa Ana and sundowner winds** | Hot, dry offshore winds in Southern California (Santa Ana) and down the slopes above Santa Barbara (sundowner). Very local and fast-changing. | 05 |
+| **Scan strategy (VCP)** | Volume coverage pattern: the set of tilt angles and settings a radar cycles through. Precipitation modes are faster; clear-air modes are slower and more sensitive. | 02 |
 | **Segment** | A stretch of a station's record between two breaks, assumed to have a constant level against its neighbours. A segment more than 0.5 °C off the reference segment is marked bad. | 09 |
 | **Sparse sensors** | Instruments that measure accurately at a few points and leave everything in between unobserved, such as weather stations. | 01 |
+| **Split cut** | Scanning the same low tilt twice: once with a long gap between pulses to see far, once with a short gap to measure fast winds. | 02 |
 | **Step (change)** | A sudden lasting jump in a station's readings, typical of an instrument swap, a recalibration or a station move. | 04 |
 | **Storm hour** | Here, a station's windiest 2% of hours or any hour with at least 1 mm of rain. | 04 |
 | **Stuck sensor** | A sensor that keeps reporting the same value regardless of the weather. | 04 |
+| **Sweep** | One full turn of the radar antenna at one tilt angle. A sweep is a set of rays, each cut into range gates. | 02 |
 | **Time offset** | Correct values labelled with the wrong time, such as local time read as UTC (8 hours off in California winter). | 04 |
 | **Tule fog** | Dense ground fog in California's Central Valley on calm winter nights, sometimes lasting for days. | 05 |
 | **USAF / WBAN** | Two historical station-numbering schemes (US Air Force; Weather Bureau, Army and Navy). Together they form an ISD station id. | 01 |
 | **USCRN** | The US Climate Reference Network: research-grade stations built for long-term climate monitoring, with three thermometers per site. | 01 |
 | **UTC** | Coordinated Universal Time, the single time zone weather data uses. California is 7 or 8 hours behind. | 01 |
 | **Verdict** | The combined judgement on a station-hour: pass, suspect (one check fired) or quarantine (two independent kinds of evidence agree). | 05 |
+| **Volume scan** | One full set of sweeps at all tilt angles, every 4–10 minutes. | 02 |
+| **Z–R relationship** | An empirical formula Z = a·R^b that turns radar reflectivity into rain rate. The constants depend on the kind of rain, so no one formula is right everywhere. | 02 |

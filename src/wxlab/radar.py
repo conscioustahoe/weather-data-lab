@@ -1,8 +1,9 @@
-"""Download raw radar data: MRMS hourly rainfall and NEXRAD Level II volumes.
+"""Download and read raw radar data: MRMS hourly rainfall and NEXRAD Level II volumes.
 
-Phase 2 adds radar as a second kind of sensor. This module only fetches the raw files
-and keeps them as they are (the raw layer stays immutable). Reading and processing
-them belongs to notebooks 02 and 10.
+Phase 2 adds radar as a second kind of sensor. The first half of this module fetches
+the raw files and keeps them as they are (the raw layer stays immutable). The second
+half reads them: a Level II volume with Py-ART, an MRMS file with cfgrib, and the
+step from radar reflectivity to rain on the MRMS grid that notebook 02 uses.
 
 Two sources, both public on AWS and read without an account:
 
@@ -135,6 +136,189 @@ def run(jobs, workers=16, passes=4, label="") -> dict:
     counts["error"] = len(failed)
     log.info("%s finished: %s", label, counts)
     return counts
+
+
+# ---------------------------------------------------------------------------
+# Reading
+# ---------------------------------------------------------------------------
+
+def level2_files(raw_dir: Path, radar: str, day: str) -> list[Path]:
+    """Volume files for one radar on one downloaded storm day, in time order."""
+    return sorted(p for p in (Path(raw_dir) / "nexrad" / radar / day).iterdir()
+                  if p.name.startswith(radar) and not p.name.endswith(("_MDM", ".part")))
+
+
+def volume_time(path: Path) -> pd.Timestamp:
+    """Start time of a volume scan, from its file name (KMUX20211024_185215_V06)."""
+    return pd.Timestamp(dt.datetime.strptime(Path(path).name[4:19], "%Y%m%d_%H%M%S"), tz="UTC")
+
+
+def read_volume(path: Path, fields=None):
+    """Read one Level II volume with Py-ART.
+
+    Level II is the radar's own output: a series of compressed binary messages, one
+    per ray, holding every field the radar measured at every range gate. Py-ART
+    turns it into a ``Radar`` object with all sweeps stacked ray after ray.
+    """
+    import pyart
+
+    return pyart.io.read_nexrad_archive(str(path), include_fields=fields)
+
+
+def sweep_table(radar) -> pd.DataFrame:
+    """One row per sweep: elevation angle, number of rays, Nyquist velocity and fields.
+
+    Modern scan strategies use split cuts. The lowest angles are scanned twice: once
+    with a long pulse spacing that sees far and measures reflectivity and the
+    dual-polarization fields, and once with a short spacing that measures velocity.
+    The table makes that visible, because sweep 0 and sweep 1 share an angle but
+    carry different fields.
+    """
+    import numpy as np
+
+    rows = []
+    for s in range(radar.nsweeps):
+        sl = radar.get_slice(s)
+        present = [k for k, v in radar.fields.items() if np.ma.count(v["data"][sl]) > 0]
+        rows.append({
+            "sweep": s,
+            "elevation_deg": round(float(radar.fixed_angle["data"][s]), 2),
+            "rays": sl.stop - sl.start,
+            "nyquist_m_s": round(float(radar.instrument_parameters["nyquist_velocity"]["data"][sl.start]), 1),
+            "fields": ", ".join(sorted(SHORT.get(k, k) for k in present)),
+        })
+    return pd.DataFrame(rows).set_index("sweep")
+
+
+# Short names for Py-ART's long field names.
+SHORT = {
+    "reflectivity": "Z", "velocity": "V", "spectrum_width": "SW",
+    "differential_reflectivity": "ZDR", "cross_correlation_ratio": "rhoHV",
+    "differential_phase": "PhiDP", "clutter_filter_power_removed": "CFP",
+}
+
+
+def beam_height(range_m, elevation_deg, radar_alt_m=0.0):
+    """Height of the beam centre above sea level, in metres.
+
+    Uses the standard 4/3 Earth radius model: the atmosphere bends the beam down a
+    little, which is the same as a straight beam over an Earth a third larger. Even
+    so the beam climbs away from the ground with range because the Earth curves away
+    beneath it. (Doviak and Zrnic, *Doppler Radar and Weather Observations*, eq. 2.28b.)
+    """
+    import numpy as np
+
+    ke_a = 4 / 3 * 6_371_000.0
+    r = np.asarray(range_m, dtype=float)
+    th = np.deg2rad(elevation_deg)
+    return np.sqrt(r**2 + ke_a**2 + 2 * r * ke_a * np.sin(th)) - ke_a + radar_alt_m
+
+
+def mrms_path(raw_dir: Path, product: str, time) -> Path:
+    """Path of one downloaded MRMS hourly file. ``time`` is the end of the hour."""
+    t = pd.Timestamp(time)
+    return Path(raw_dir) / "mrms" / product / f"{t:%Y}" / f"MRMS_{product}_{t:%Y%m%d-%H}0000.grib2.gz"
+
+
+def read_mrms(path: Path, box=None):
+    """Read one gzipped MRMS GRIB2 file as rain in mm over the hour.
+
+    Two traps. MRMS uses NOAA's own local GRIB2 parameter tables, so generic readers
+    like cfgrib find the grid but call the variable "unknown" with unknown units. The
+    product name comes from the file name instead and the units (mm) from the MRMS
+    documentation. And -3 means "no radar coverage here", which must become missing
+    and not be read as rain. Longitudes run 230-300 degrees east.
+
+    ``box`` is (lat_min, lat_max, lon_min, lon_max) in degrees east, to crop early.
+    """
+    import gzip
+    import os
+    import tempfile
+
+    import xarray as xr
+
+    with gzip.open(path) as f:
+        raw = f.read()
+    tmp = tempfile.NamedTemporaryFile(suffix=".grib2", delete=False)
+    try:
+        tmp.write(raw)
+        tmp.close()
+        ds = xr.open_dataset(tmp.name, engine="cfgrib", backend_kwargs={"indexpath": ""})
+        da = ds[list(ds.data_vars)[0]]
+        if box is not None:
+            la0, la1, lo0, lo1 = box
+            da = da.sel(latitude=slice(la1, la0), longitude=slice(lo0, lo1))
+        da = da.load()
+    finally:
+        os.unlink(tmp.name)
+    da = da.where(da >= 0)
+    da.name = "precipitation_amount"
+    da.attrs = {"units": "mm", "product": Path(path).name.split("_00.00")[0].removeprefix("MRMS_")}
+    return da
+
+
+def rain_rate(dbz, a=300.0, b=1.4, max_dbz=53.0):
+    """Rain rate in mm/h from reflectivity in dBZ, through Z = a R^b.
+
+    Reflectivity grows with the sixth power of drop size while rain rate grows with
+    roughly the third and a half, so no single formula is right for every storm. The
+    WSR-88D's long-standing default for ordinary rain is Z = 300 R^1.4 (Fulton et al.
+    1998, *Weather and Forecasting* 13). Echo above 53 dBZ is capped there because it
+    is usually hail, which would otherwise turn into absurd rain rates.
+    """
+    import numpy as np
+
+    z = 10 ** (np.minimum(dbz, max_dbz) / 10)
+    return (z / a) ** (1 / b)
+
+
+def radar_rain_on_grid(files, start, end, lat, lon, sweep=0, rhohv_min=0.9, max_range_m=150_000.0):
+    """Rain between ``start`` and ``end`` (UTC), accumulated onto a lat/lon grid (mm).
+
+    Each volume's lowest sweep is turned into a rain rate per gate, gates whose
+    correlation coefficient says "not rain" are dropped, and the rates are averaged
+    into the grid cells (``lat`` descending, ``lon`` ascending, degrees east, regular
+    spacing as in MRMS). Each volume's rate is assumed to hold until the next one
+    starts, clipped to the window, so pass ``files`` covering a little before and after.
+    """
+    import numpy as np
+
+    start, end = pd.Timestamp(start), pd.Timestamp(end)
+    times = [volume_time(f) for f in files]
+    total = np.zeros((len(lat), len(lon)))
+    dlat, dlon = float(lat[0] - lat[1]), float(lon[1] - lon[0])
+    for i, f in enumerate(files[:-1]):
+        hours = (min(times[i + 1], end) - max(times[i], start)).total_seconds() / 3600
+        if hours <= 0:
+            continue
+        r = read_volume(f, fields=["reflectivity", "cross_correlation_ratio"])
+        sl = r.get_slice(sweep)
+        z = r.fields["reflectivity"]["data"][sl]
+        rho = r.fields["cross_correlation_ratio"]["data"][sl]
+        glat, glon, _ = r.get_gate_lat_lon_alt(sweep)
+        ok = (~np.ma.getmaskarray(z)) & (np.ma.filled(rho, 0) >= rhohv_min)
+        ok &= (r.range["data"] <= max_range_m)[None, :]
+        rate = np.where(ok, rain_rate(np.ma.filled(z, -99)), 0.0)
+        iy = np.round((float(lat[0]) - glat) / dlat).astype(int)
+        ix = np.round((glon % 360 - float(lon[0])) / dlon).astype(int)
+        inside = (iy >= 0) & (iy < len(lat)) & (ix >= 0) & (ix < len(lon))
+        s = np.zeros_like(total)
+        n = np.zeros_like(total)
+        np.add.at(s, (iy[inside], ix[inside]), rate[inside])
+        np.add.at(n, (iy[inside], ix[inside]), 1)
+        total += np.where(n > 0, s / np.maximum(n, 1), 0.0) * hours
+    return total
+
+
+def volume_counts(raw_dir: Path, radars=LEVEL2_RADARS, days=LEVEL2_DAYS) -> pd.DataFrame:
+    """Number of downloaded volumes per radar, day and UTC hour (zeros included)."""
+    rows = []
+    for radar in radars:
+        for day in days:
+            hours = pd.Series([volume_time(f).hour for f in level2_files(raw_dir, radar, day)])
+            counts = hours.value_counts().reindex(range(24), fill_value=0)
+            rows += [{"radar": radar, "day": day, "hour": h, "volumes": int(c)} for h, c in counts.items()]
+    return pd.DataFrame(rows)
 
 
 if __name__ == "__main__":

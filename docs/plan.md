@@ -97,7 +97,7 @@ A controlled experiment. A small model (gradient boosting) predicts station temp
 
 ### 02 · Radar: read and explore
 
-Raw NEXRAD Level II volumes for a California radar, read with Py-ART: reflectivity, radial velocity, dual-polarization fields and the polar volume geometry. Look for artifacts on purpose (ground clutter, birds and insects at dusk, terrain blockage), and compare a raw volume with MRMS, NOAA's quality-controlled national mosaic.
+Raw NEXRAD Level II volumes from KMUX (Bay Area) and KVTX (Los Angeles) on five storm days, read with Py-ART: the polar geometry and split cuts, reflectivity, radial velocity and the correlation coefficient. Non-weather echo found with ρHV, the beam's height with range, one hour of radar rain from a Z–R formula set beside MRMS with and without gauges, and volume coverage per hour including KMUX's 18-hour archive gap on 2023-01-09. Done (terrain blockage and biological echo were tried and left out because the signal on these storm days was not clear).
 
 ### 10 · Radar vs gauges
 

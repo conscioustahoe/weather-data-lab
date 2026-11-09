@@ -60,4 +60,4 @@ All data sources are public and read anonymously from NOAA's open data buckets o
 
 ## Status
 
-Phase 1 in progress. See [docs/learning-log.md](docs/learning-log.md).
+Phase 1 is complete. Phase 2 has started with notebook 02. See [docs/learning-log.md](docs/learning-log.md).
