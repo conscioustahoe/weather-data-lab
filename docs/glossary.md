@@ -4,6 +4,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 
 | Term | Meaning | First used |
 |---|---|---|
+| **Allowed lateness** | How long after the watermark a window keeps accepting late data and re-emitting its result. | 08 |
 | **Analysis** | A model's best estimate of the current state of the atmosphere, made by data assimilation. A forecast run starts from it. | 03 |
 | **Anomaly** | A value minus its climatology: what is left after removing the expected daily and seasonal cycle. | 01 |
 | **Arm (experiment)** | One version of a controlled experiment. Every arm trains the same model the same way and only the training data differs, so a difference in the score comes from the data. | 09 |
@@ -15,6 +16,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Bias** | The average difference between two sources (here, station minus model). A steady offset. | 03 |
 | **Break (inhomogeneity)** | A point where a station's record changes character, such as a step from a sensor swap. A property of a period rather than of single hours. | 05 |
 | **Break episode** | A run of days flagged as a break. A two-window shift test fires on every day near a shift, so one break shows up as an episode that can last weeks. Break dating pins each episode to one day. | 09 |
+| **Broadcast join** | A join where the small table is copied to every worker, so the big table doesn't have to be shuffled. | 08 |
 | **CF conventions** | The community standard for naming and describing weather and climate variables, for example `air_temperature` with units. | 01 |
 | **Chance baseline** | How often a check would "detect" a fault in a given window on a station with no fault, from background false alarms alone. | 05 |
 | **Chunk** | One piece of a chunked array, stored and read as a unit. A read costs roughly the number of chunks it touches. | 11 |
@@ -34,6 +36,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Dual polarization** | Sending radar pulses in two orientations (horizontal and vertical) at once, so the radar can tell the shape and type of what it sees. | 02 |
 | **Duplicate station** | One physical station carried under two ids in an archive, for example after a base is renamed. Not an independent witness. | 04 |
 | **4/3 Earth model** | The standard way to work out a radar beam's height: the air bends the beam down slightly, which is the same as a straight beam over an Earth a third larger. | 02 |
+| **Event time and processing time** | When something was measured versus when the pipeline sees it. Late data is the gap between them. | 08 |
 | **Fault catalogue** | The answer key for planted faults: which station, which type, what size, and when each fault starts, ends and actually touches the data. | 04 |
 | **FM-12 (SYNOP)** | The international synoptic report exchanged between weather services every 3 or 6 hours, on the hour. | 01 |
 | **FM-13** | The marine version of the synoptic report, used by ships, buoys and coastal stations. | 01 |
@@ -67,6 +70,9 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Object store** | Ray's shared memory for task results. Tasks pass references to objects in it instead of copying the data. | 07 |
 | **Oracle (arm)** | An experiment arm that uses knowledge no real system has, here exactly which hours were faulty. It shows the best a method of that kind could do. | 09 |
 | **Override** | A reviewer's decision stored beside an automatic verdict, with who, when and why. It changes what users see without erasing what the checks said. | 06 |
+| **Pane** | One emitted result for a window. A window can fire several panes: on time, then late, as data keeps arriving. | 08 |
+| **Partition pruning** | Skipping whole folders of files a query can't need, using values encoded in folder names such as year=2023. | 08 |
+| **PCollection** | Beam's name for a dataset flowing through a pipeline. It may be finite (batch) or never-ending (stream), and every element carries an event time. | 08 |
 | **Planted fault** | A known error added on purpose to a copy of good data so a check's recall can be measured. Also called fault or anomaly injection. | 04 |
 | **POD, FAR and CSI** | Detection scores. POD: share of observed events that were also detected. FAR: share of detections that didn't happen. CSI: hits over hits, misses and false alarms combined. | 10 |
 | **Post-processing** | Learning a correction to a weather model's output from its past errors, for example a station's typical difference from HRRR by hour and season. | 09 |
@@ -86,6 +92,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Representativeness error** | The honest disagreement between a point measurement and a grid-box average, even when both are right. | 03 |
 | **RMSE** | Root mean squared error: the typical size of a difference, with large misses counting extra. | 03 |
 | **Robust z-score** | Distance from the median in units of the MAD-based standard deviation. Used for thresholds so faults don't inflate their own yardstick. | 05 |
+| **Runner** | The engine that executes a Beam pipeline: Dataflow, Flink, Spark or a local runner. The pipeline code stays the same. | 08 |
 | **Santa Ana and sundowner winds** | Hot, dry offshore winds in Southern California (Santa Ana) and down the slopes above Santa Barbara (sundowner). Very local and fast-changing. | 05 |
 | **Scan strategy (VCP)** | Volume coverage pattern: the set of tilt angles and settings a radar cycles through. Precipitation modes are faster; clear-air modes are slower and more sensitive. | 02 |
 | **SEEPS** | Stable Equitable Error in Probability Space: a daily rain score that sorts each day into dry, light or heavy, with the light/heavy line set per station from its climate. Only defined where the share of dry days is between 0.1 and 0.85. | 10 |
@@ -108,6 +115,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Verdict** | The combined judgement on a station-hour: pass, suspect (one check fired) or quarantine (two independent kinds of evidence agree). | 05 |
 | **Verdict churn** | How often an hour's verdict changes between the run that first judged it and a later run with more data. | 06 |
 | **Volume scan** | One full set of sweeps at all tilt angles, every 4–10 minutes. | 02 |
+| **Watermark** | A streaming system's estimate of how far event time has progressed, used to decide when a window is complete enough to emit. | 08 |
 | **Witness check** | Judging one instrument against an independent one that measures the same thing a different way, such as a gauge against radar. Only valid where the witness can see. | 10 |
 | **Zarr** | A format that stores an n-dimensional array as a grid of compressed chunks, one object each, plus small JSON metadata, so readers fetch only the chunks they need. | 11 |
 | **Z–R relationship** | An empirical formula Z = a·R^b that turns radar reflectivity into rain rate. The constants depend on the kind of rain, so no one formula is right everywhere. | 02 |
