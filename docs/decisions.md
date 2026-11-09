@@ -48,7 +48,7 @@ A small gradient-boosting model predicts station temperature from HRRR fields, a
 
 ## Notebooks teach through a story
 
-Each notebook follows the style of the *Learning WeatherBench 2* guide: the reader learns each concept at the moment the project needs it, in flowing prose, with every term explained where it first appears, "In ML terms" bridges, and "Check yourself" questions. The point is that someone new to weather data can follow the whole project and come out understanding the domain.
+Each notebook follows the style of the *Learning WeatherBench 2* guide: the reader learns each concept at the moment the project needs it, in flowing prose, with every term explained where it first appears and "Check yourself" questions. The point is that someone new to weather data can follow the whole project and come out understanding the domain.
 
 ## Runtime: a laptop
 

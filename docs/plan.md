@@ -25,8 +25,7 @@ The model is the *Learning WeatherBench 2* style: a story in which the reader le
 - Open with what this step of the project is, why it matters and what to look for in the output, in flowing prose.
 - Explain every new term where it first appears, in plain words, and add it to `docs/glossary.md`.
 - After each code section, say what just happened and what to notice.
-- Where an idea has an ML or engineering equivalent, add a short "In ML terms" blockquote.
-- End with "What surprised me", "In ML terms" for the notebook as a whole, and a few "Check yourself" questions with answers.
+- End with "What surprised me" and a few "Check yourself" questions with answers.
 - Use real data for every plot. Keep saved outputs small enough for GitHub to render.
 - Where a notebook introduces a tool, its plan below lists a short **Read first**: the few documentation pages that explain the tool's concepts and design, about 30–60 minutes. The notebook then uses the tool on project data. The docs give the vocabulary and the reasons behind the design; the notebook gives the practice.
 
