@@ -105,15 +105,15 @@ MRMS radar-only rain at the 1 km cell above every station with a rain gauge, eve
 
 ### 06 · Monitoring and verdicts
 
-Extend phase 1's monthly runs into a full monitoring view: metric history, alerts on changes, verdict history per station, and how verdicts get reviewed and corrected over time.
+The monthly QA job replayed on real data: how often verdicts change in hindsight and why, control charts on each check's firing rate, and hand reviews stored as overrides beside the automatic verdicts. Done.
 
 ### 07 · Pipelines with Ray
 
-Rebuild the phase 1 ingestion as a Ray pipeline: an immutable raw layer with a manifest, idempotent units, a backfill and an incremental run sharing the same code, and how the design would scale to a cluster and a live feed.
+The phase 1 ingestion as Ray tasks over station-year units, with a manifest that fingerprints inputs and code, a backfill and an incremental run sharing one plan, actors for connection reuse, Ray Data for a dataset-wide step, and Ray's documented strengths and limits. Done.
 
 ### 08 · Spark and Beam
 
-The station job in PySpark, a first Beam pipeline on the local runner, a look at xarray-beam for gridded data, and a comparison of Ray, Spark, Beam and Dask.
+The neighbour check as a Spark join (and the shuffles it needs), window functions and a pandas UDF; the same unit function in Beam; event time, watermarks and a late reading re-firing a daily window; and a comparison of Ray, Spark and Beam. Done.
 
 ### 11 · Gridded data at scale
 
@@ -125,7 +125,7 @@ The station table is small. Gridded data is not, and at scale the way an array i
 - **Measure:** time and bytes read for "one map at one hour" and "four years at one point" in each layout.
 - **xarray-beam:** compute an hourly climatology of the cube with Beam on the local runner, and compare with the same computation in plain xarray.
 - **Read first:** Zarr's "Quickstart" and the pages on arrays, chunks, compression and sharding; the xarray-beam README and "Why xarray-beam".
-- **Done when:** the two layouts exist, the read-cost table shows why the layout must match the reader, and the notebook explains how the same steps would work for a petabyte dataset.
+- **Done when:** the two layouts exist, the read-cost table shows why the layout must match the reader, and the notebook explains how the same steps would work for a petabyte dataset. Done: the rechunk goes through an intermediate layout on disk to stay under about 2 GB of memory.
 
 ---
 

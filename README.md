@@ -42,7 +42,7 @@ Each notebook is one step of the project and one chapter of learning. It tells a
 | 06 | [Monitoring and verdicts](notebooks/06-monitoring-and-verdicts.ipynb) | 2 | Long-running monitoring, alerting, verdict history |
 | 07 | [Pipelines with Ray](notebooks/07-pipelines-with-ray.ipynb) | 2 | The same ingestion as a parallel, idempotent Ray pipeline |
 | 08 | [Spark and Beam](notebooks/08-spark-and-beam.ipynb) | 2 | The same job in Spark, a first Beam pipeline, and how the frameworks compare |
-| 11 | Gridded data at scale | 2 | xarray, Zarr and xarray-beam on four years of HRRR over California |
+| 11 | [Gridded data at scale](notebooks/11-gridded-data-at-scale.ipynb) | 2 | xarray, Zarr and xarray-beam on four years of HRRR over California |
 
 Reusable code lives in `src/wxlab/`, so the notebooks stay short. Reference notes live in `docs/`, including a running [glossary](docs/glossary.md).
 
@@ -60,4 +60,4 @@ All data sources are public and read anonymously from NOAA's open data buckets o
 
 ## Status
 
-Phase 1 is complete. Phase 2 has started with notebook 02. See [docs/learning-log.md](docs/learning-log.md).
+Phases 1 and 2 are complete: all eleven notebooks run. See [docs/learning-log.md](docs/learning-log.md).
