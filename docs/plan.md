@@ -101,7 +101,7 @@ Raw NEXRAD Level II volumes from KMUX (Bay Area) and KVTX (Los Angeles) on five 
 
 ### 10 · Radar vs gauges
 
-Compare MRMS radar rainfall with station rain gauges over the same hours, by distance from the radar, terrain and rain type, and turn the comparison into a daily consistency metric. Rain is scored with methods built for it (for example SEEPS), not RMSE.
+MRMS radar-only rain at the 1 km cell above every station with a rain gauge, every hour of 2021–2024, decoded straight from 70,000 GRIB2 files. Scored by detection (POD, FAR, CSI), totals by height of the lowest radar beam, and SEEPS on daily totals where it is defined. Radar as a witness against gauges: hours where a gauge reports a downpour and radar sees almost nothing. Done.
 
 ### 06 · Monitoring and verdicts
 

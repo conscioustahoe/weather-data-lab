@@ -60,9 +60,11 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Nyquist velocity** | The fastest speed a Doppler radar can measure unambiguously. Faster motion folds over and shows up with the wrong speed and sign. | 02 |
 | **Oracle (arm)** | An experiment arm that uses knowledge no real system has, here exactly which hours were faulty. It shows the best a method of that kind could do. | 09 |
 | **Planted fault** | A known error added on purpose to a copy of good data so a check's recall can be measured. Also called fault or anomaly injection. | 04 |
+| **POD, FAR and CSI** | Detection scores. POD: share of observed events that were also detected. FAR: share of detections that didn't happen. CSI: hits over hits, misses and false alarms combined. | 10 |
 | **Post-processing** | Learning a correction to a weather model's output from its past errors, for example a station's typical difference from HRRR by hour and season. | 09 |
 | **Precision** | The share of a check's alarms that point at real problems. | 04 |
 | **Quality code (ISD)** | A one-character flag NOAA attaches to every value: `1`/`5` passed, `2`/`6` suspect, `3`/`7` erroneous, `9` missing, plus letters for special cases. Evidence, not truth. | 01 |
+| **Radar blind spot** | A place where mountains or distance keep every radar's lowest beam far above the ground, so radar sees little of the rain there. | 10 |
 | **Radial velocity** | The speed of targets toward or away from the radar, from the Doppler shift. Motion across the beam is invisible. | 02 |
 | **Random thinning** | The control arm: remove as much data as QA did but at random. If QA only beats faulty data by having less data, random thinning does just as well. | 09 |
 | **Range gate** | One slot of distance along a ray (250 m for NEXRAD). The radar reports one value per gate. | 02 |
@@ -75,6 +77,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Robust z-score** | Distance from the median in units of the MAD-based standard deviation. Used for thresholds so faults don't inflate their own yardstick. | 05 |
 | **Santa Ana and sundowner winds** | Hot, dry offshore winds in Southern California (Santa Ana) and down the slopes above Santa Barbara (sundowner). Very local and fast-changing. | 05 |
 | **Scan strategy (VCP)** | Volume coverage pattern: the set of tilt angles and settings a radar cycles through. Precipitation modes are faster; clear-air modes are slower and more sensitive. | 02 |
+| **SEEPS** | Stable Equitable Error in Probability Space: a daily rain score that sorts each day into dry, light or heavy, with the light/heavy line set per station from its climate. Only defined where the share of dry days is between 0.1 and 0.85. | 10 |
 | **Segment** | A stretch of a station's record between two breaks, assumed to have a constant level against its neighbours. A segment more than 0.5 °C off the reference segment is marked bad. | 09 |
 | **Sparse sensors** | Instruments that measure accurately at a few points and leave everything in between unobserved, such as weather stations. | 01 |
 | **Split cut** | Scanning the same low tilt twice: once with a long gap between pulses to see far, once with a short gap to measure fast winds. | 02 |
@@ -83,10 +86,13 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Stuck sensor** | A sensor that keeps reporting the same value regardless of the weather. | 04 |
 | **Sweep** | One full turn of the radar antenna at one tilt angle. A sweep is a set of rays, each cut into range gates. | 02 |
 | **Time offset** | Correct values labelled with the wrong time, such as local time read as UTC (8 hours off in California winter). | 04 |
+| **Tipping bucket** | The rain gauge used at airport stations: a small seesaw that tips each time it fills with 0.01 inch (0.25 mm) of water and counts the tips. Heated so snow melts into it. | 10 |
 | **Tule fog** | Dense ground fog in California's Central Valley on calm winter nights, sometimes lasting for days. | 05 |
+| **Undercatch** | A gauge catching less than actually fell, mostly because wind carries drops past the funnel; worst for snow. | 10 |
 | **USAF / WBAN** | Two historical station-numbering schemes (US Air Force; Weather Bureau, Army and Navy). Together they form an ISD station id. | 01 |
 | **USCRN** | The US Climate Reference Network: research-grade stations built for long-term climate monitoring, with three thermometers per site. | 01 |
 | **UTC** | Coordinated Universal Time, the single time zone weather data uses. California is 7 or 8 hours behind. | 01 |
 | **Verdict** | The combined judgement on a station-hour: pass, suspect (one check fired) or quarantine (two independent kinds of evidence agree). | 05 |
 | **Volume scan** | One full set of sweeps at all tilt angles, every 4–10 minutes. | 02 |
+| **Witness check** | Judging one instrument against an independent one that measures the same thing a different way, such as a gauge against radar. Only valid where the witness can see. | 10 |
 | **Z–R relationship** | An empirical formula Z = a·R^b that turns radar reflectivity into rain rate. The constants depend on the kind of rain, so no one formula is right everywhere. | 02 |
