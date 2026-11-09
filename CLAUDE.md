@@ -30,7 +30,7 @@ See `docs/decisions.md` for the reasoning behind each one.
 - **Reference:** HRRR's 1-hour forecast (not the analysis, which assimilates the same station reports), read with Herbie, 2021–2024 to avoid earlier model-version changes. Values at station points are stored, plus a California crop of the grid (2021–2024) for the gridded-data notebook.
 - **QA:** planted faults (step, drift, bias, stuck sensor, time offset, storm gaps) in 20–30% of stations at a range of sizes measure recall; hand-checked real flags measure precision; the three most suspicious real stations are investigated. Quarantine needs a second independent witness.
 - **Monitoring:** checks run month by month, recording metrics per run.
-- **Model impact:** gradient boosting predicting station temperature from HRRR, trained on clean, faulty, QA'd and randomly thinned data; test on clean 2024 and held-out stations; several seeds.
+- **Model impact:** gradient boosting predicting the station's correction to HRRR, trained on eight arms (clean, faulty, QA'd, QA'd strict, random thinning, oracle, drop segments, adjust segments); test on 2024 minus real quarantined hours, at training and held-out stations; five seeds.
 - **Runtime:** everything runs locally on a laptop; no GPU. Notebooks are not designed for Colab.
 
 ## The plan

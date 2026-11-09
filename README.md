@@ -18,7 +18,7 @@ The lab is built around one project:
 
 Values are never deleted. Each check's flag is stored as its own column beside the data, so a user can choose a different strictness level.
 
-**How the verdicts are tested.** A verdict is a claim, and it can be wrong in two ways. Recall (how many real problems are caught) is measured on faults planted into clean data, where the answer is known. Precision (how many flags are real problems) is measured by checking a sample of flags on real data by hand. Finally, a controlled model experiment tests whether quarantining what the checks flag actually helps a model more than removing the same amount of data at random.
+**How the verdicts are tested.** A verdict is a claim, and it can be wrong in two ways. Recall (how many real problems are caught) is measured on faults planted into clean data, where the answer is known. Precision (how many flags are real problems) is measured by checking a sample of flags on real data by hand. Finally, a controlled model experiment tests whether cleaning helps a model more than removing the same amount of data at random. It also tests whether breaks (lasting shifts in a station's record) are better dropped or repaired.
 
 ## Two phases
 
@@ -36,7 +36,7 @@ Each notebook is one step of the project and one chapter of learning. It tells a
 | 03 | [Matching to a reference](notebooks/03-matching-to-a-reference.ipynb) | 1 | The HRRR model, GRIB2, forecast vs analysis, height correction, representativeness |
 | 04 | [How data goes wrong](notebooks/04-how-data-goes-wrong.ipynb) | 1 | Planting known faults: step, drift, bias, stuck sensor, time offset, storm gaps |
 | 05 | [QA checks and metrics](notebooks/05-qa-checks-and-metrics.ipynb) | 1 | Layered checks, verdicts, monthly monitoring, precision and recall, real problem stations |
-| 09 | [Does clean data help the model?](notebooks/09-does-clean-data-help-the-model.ipynb) | 1 | Clean vs faulty vs QA'd vs randomly thinned training data |
+| 09 | [Does clean data help the model?](notebooks/09-does-clean-data-help-the-model.ipynb) | 1 | Eight versions of the training data, from clean to faulty to repaired; dating and repairing breaks |
 | 02 | [Radar: read and explore](notebooks/02-radar-read-and-explore.ipynb) | 2 | Raw radar volumes, the national mosaic, radar artifacts |
 | 10 | [Radar vs gauges](notebooks/10-radar-vs-gauges.ipynb) | 2 | Consistency across sources |
 | 06 | [Monitoring and verdicts](notebooks/06-monitoring-and-verdicts.ipynb) | 2 | Long-running monitoring, alerting, verdict history |

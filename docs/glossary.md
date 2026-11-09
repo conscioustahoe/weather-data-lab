@@ -6,12 +6,14 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 |---|---|---|
 | **Analysis** | A model's best estimate of the current state of the atmosphere, made by data assimilation. A forecast run starts from it. | 03 |
 | **Anomaly** | A value minus its climatology: what is left after removing the expected daily and seasonal cycle. | 01 |
+| **Arm (experiment)** | One version of a controlled experiment. Every arm trains the same model the same way and only the training data differs, so a difference in the score comes from the data. | 09 |
 | **ASOS / AWOS** | Automated weather stations at US airports. ASOS stations are run by the national weather and aviation agencies at larger airports; AWOS stations are at smaller airports and often report whole degrees Celsius. | 01 |
 | **Background (first guess)** | The model's previous short forecast, which data assimilation nudges toward new observations. | 03 |
 | **Ball tree** | A spatial index for finding the nearest grid points to a location quickly, used on grids that are not latitude–longitude. | 03 |
 | **Baseline (stations)** | The stations we trust enough to plant faults into: nearly complete, steady against HRRR, no gross errors and no duplicates. "Nothing we can see" rather than "certainly clean". | 04 |
 | **Bias** | The average difference between two sources (here, station minus model). A steady offset. | 03 |
 | **Break (inhomogeneity)** | A point where a station's record changes character, such as a step from a sensor swap. A property of a period rather than of single hours. | 05 |
+| **Break episode** | A run of days flagged as a break. A two-window shift test fires on every day near a shift, so one break shows up as an episode that can last weeks. Break dating pins each episode to one day. | 09 |
 | **CF conventions** | The community standard for naming and describing weather and climate variables, for example `air_temperature` with units. | 01 |
 | **Chance baseline** | How often a check would "detect" a fault in a given window on a station with no fault, from background false alarms alone. | 05 |
 | **Climatology** | The expected value for a place, day of year and time of day, averaged over many years. "Is this plausible?" means "how far is it from climatology?" | 01 |
@@ -31,8 +33,10 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **FM-13** | The marine version of the synoptic report, used by ships, buoys and coastal stations. | 01 |
 | **FM-15 (METAR)** | The routine hourly airport report, issued a few minutes before each hour (the exact minute differs by airport). | 01 |
 | **FM-16 (SPECI)** | A special airport report, issued whenever the weather changes enough to matter for flying. | 01 |
+| **Gradient boosting** | A model built from many small decision trees, each one correcting the errors of the ones before. A strong default for tables of features. LightGBM is a fast implementation. | 09 |
 | **GRIB2** | The binary format weather centres exchange model output in: a stack of independent messages, one 2-D field each. | 03 |
 | **Held-out stations** | Stations kept out of training and free of planted faults, used to test whether a model works at places it never saw. | 04 |
+| **Homogenization** | Finding the breaks in a station's record and adjusting the segments between them so the whole record is consistent, usually by lining older segments up with the newest using neighbours. NOAA's pairwise algorithm does this for GHCN-Monthly. | 09 |
 | **HOMR** | NOAA's Historical Observing Metadata Repository: station names, locations, platforms and equipment history. | 05 |
 | **HRRR** | High-Resolution Rapid Refresh: NOAA's hourly weather model for the continental US on a 3 km grid. | 03 |
 | **Idempotent** | Running a unit of work twice gives the same result as running it once, so retries and reruns are safe. | 01 |
@@ -46,15 +50,20 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **MAD (median absolute deviation)** | The median distance of values from their median. Times 1.4826 it estimates the standard deviation without being stretched by outliers. | 05 |
 | **Marine layer / inversion** | Cool, moist ocean air near the surface with warmer air above it. Temperature rises with height instead of falling, so the standard lapse rate does not apply. | 03 |
 | **Missing not at random** | Data whose chance of being missing depends on the value or the conditions, like readings lost in storms. Dropping those rows biases what a model learns. | 04 |
+| **Oracle (arm)** | An experiment arm that uses knowledge no real system has, here exactly which hours were faulty. It shows the best a method of that kind could do. | 09 |
 | **Planted fault** | A known error added on purpose to a copy of good data so a check's recall can be measured. Also called fault or anomaly injection. | 04 |
+| **Post-processing** | Learning a correction to a weather model's output from its past errors, for example a station's typical difference from HRRR by hour and season. | 09 |
 | **Precision** | The share of a check's alarms that point at real problems. | 04 |
 | **Quality code (ISD)** | A one-character flag NOAA attaches to every value: `1`/`5` passed, `2`/`6` suspect, `3`/`7` erroneous, `9` missing, plus letters for special cases. Evidence, not truth. | 01 |
+| **Random thinning** | The control arm: remove as much data as QA did but at random. If QA only beats faulty data by having less data, random thinning does just as well. | 09 |
 | **Range request** | An HTTP request for a specific span of bytes of a file. | 03 |
 | **Recall** | The share of real problems a check catches. Needs a known list of problems, which is why faults are planted. | 04 |
+| **Reference segment** | The segment every other segment is lined up with in homogenization, by convention the newest. If the newest segment is the broken one, adjusting to it spreads the fault backwards. | 09 |
 | **Representativeness error** | The honest disagreement between a point measurement and a grid-box average, even when both are right. | 03 |
 | **RMSE** | Root mean squared error: the typical size of a difference, with large misses counting extra. | 03 |
 | **Robust z-score** | Distance from the median in units of the MAD-based standard deviation. Used for thresholds so faults don't inflate their own yardstick. | 05 |
 | **Santa Ana and sundowner winds** | Hot, dry offshore winds in Southern California (Santa Ana) and down the slopes above Santa Barbara (sundowner). Very local and fast-changing. | 05 |
+| **Segment** | A stretch of a station's record between two breaks, assumed to have a constant level against its neighbours. A segment more than 0.5 °C off the reference segment is marked bad. | 09 |
 | **Sparse sensors** | Instruments that measure accurately at a few points and leave everything in between unobserved, such as weather stations. | 01 |
 | **Step (change)** | A sudden lasting jump in a station's readings, typical of an instrument swap, a recalibration or a station move. | 04 |
 | **Storm hour** | Here, a station's windiest 2% of hours or any hour with at least 1 mm of rain. | 04 |

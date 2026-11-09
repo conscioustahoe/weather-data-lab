@@ -348,6 +348,114 @@ def run_checks(df: pd.DataFrame, clim: pd.DataFrame, nbrs: dict) -> tuple[pd.Dat
     return flags, cov, cp
 
 
+# --------------------------------------------------------------------------- breaks and segments
+#
+# The ``break`` annotation marks every day near a lasting shift, so one shift shows up as
+# a run of flagged days that can last weeks. Climate datasets fix that kind of problem by
+# *homogenization*: find the date of each break, cut the station's record into segments
+# between breaks and line each segment up with the most recent one using the neighbours
+# (Menne & Williams 2009, the pairwise algorithm behind NOAA's GHCN-Monthly). The
+# functions below are a small version of that idea built on the checks above.
+
+BREAKS = {"episode_gap_days": 3, "min_step": 0.5, "min_segment_days": 30}
+
+
+def break_dates(flags, cp, gap_days=None) -> pd.DataFrame:
+    """One date per break episode.
+
+    An *episode* is a run of break days at one station with gaps of at most ``gap_days``.
+    The date is the day inside the episode where the neighbour before/after difference is
+    largest (90-day window, or 30-day where the 90-day one isn't available). That's where
+    the record changes level, the way the peak of a matched filter marks an edge.
+    """
+    gap_days = BREAKS["episode_gap_days"] if gap_days is None else gap_days
+    b = flags.loc[flags["break"], ["station_id", "time"]]
+    days = (b.assign(day=b.time.dt.floor("D"))[["station_id", "day"]]
+            .drop_duplicates().sort_values(["station_id", "day"]))
+    if days.empty:
+        return pd.DataFrame(columns=["station_id", "first_day", "last_day", "date", "delta"])
+    gap = days.groupby("station_id").day.diff().dt.days
+    days["episode"] = (gap.isna() | (gap > gap_days)).cumsum()
+    score = cp.assign(score=cp.delta_90.fillna(cp.delta_30))
+    score = score.set_index(["station_id", "day"]).score
+    rows = []
+    for (sid, _), g in days.groupby(["station_id", "episode"]):
+        s = score.reindex(pd.MultiIndex.from_arrays([[sid] * len(g), g.day])).droplevel(0)
+        s = s.dropna()
+        if s.empty:
+            continue
+        rows.append({"station_id": sid, "first_day": g.day.min(), "last_day": g.day.max(),
+                     "date": s.abs().idxmax(), "delta": float(s.loc[s.abs().idxmax()])})
+    return pd.DataFrame(rows)
+
+
+def segments(cp, dates, min_step=None, min_days=None) -> pd.DataFrame:
+    """Cut each station's record at its break dates and measure each segment's offset.
+
+    The level of a segment is the median of the daily neighbour-adjusted difference
+    (``cp.adj``, seasonal cycle removed) over the segment. Breaks are then pruned one at a
+    time, weakest first, until every remaining break separates segments that differ by at
+    least ``min_step`` °C and every segment has ``min_days`` days of data. A shift that
+    comes back (a few weeks warm and then normal again) ends up as two breaks around a
+    short segment, with the segments on either side at the same level.
+
+    The *offset* of a segment is its level minus the level of the station's most recent
+    segment, the usual convention because the newest instruments are assumed to be right.
+    Segments with ``|offset| >= min_step`` are marked ``bad``.
+    """
+    min_step = BREAKS["min_step"] if min_step is None else min_step
+    min_days = BREAKS["min_segment_days"] if min_days is None else min_days
+    by_station = {sid: g.sort_values("date").date.tolist() for sid, g in dates.groupby("station_id")} if len(dates) else {}
+    rows = []
+    for sid, g in cp.groupby("station_id", sort=False):
+        s = g.set_index("day").adj.sort_index()
+        bks = list(by_station.get(sid, []))
+        first, end = s.index.min(), s.index.max() + pd.Timedelta(days=1)
+
+        def levels(bks):
+            edges = [first] + bks + [end]
+            return edges, [s[(s.index >= a) & (s.index < b)].dropna() for a, b in zip(edges[:-1], edges[1:])]
+
+        while bks:
+            edges, segs = levels(bks)
+            med = [x.median() if len(x) else np.nan for x in segs]
+            weak = []
+            for i in range(len(bks)):
+                step = abs(med[i + 1] - med[i])
+                short = min(len(segs[i]), len(segs[i + 1])) < min_days
+                if short or not step >= min_step:
+                    weak.append((0 if short else 1, step if step == step else 0.0, i))
+            if not weak:
+                break
+            bks.pop(min(weak)[2])
+        edges, segs = levels(bks)
+        med = [x.median() if len(x) else np.nan for x in segs]
+        for k, (a, b) in enumerate(zip(edges[:-1], edges[1:])):
+            rows.append({"station_id": sid, "segment": k, "start": a, "end": b, "days": len(segs[k]),
+                         "level": med[k], "offset": med[k] - med[-1]})
+    out = pd.DataFrame(rows)
+    out["bad"] = out.offset.abs() >= min_step
+    return out
+
+
+def segment_offsets(df, segs) -> pd.DataFrame:
+    """Per row of ``df``: the offset of its segment and whether that segment is bad."""
+    out = pd.DataFrame({"offset": 0.0, "bad": False}, index=df.index)
+    bad = segs[segs.bad]
+    if bad.empty:
+        return out
+    idx = {sid: g.index for sid, g in df.groupby("station_id")}
+    for x in bad.itertuples():
+        rows = idx.get(x.station_id)
+        if rows is None:
+            continue
+        t = df.loc[rows, "time"]
+        hit = rows[((t >= x.start) & (t < x.end)).to_numpy()]
+        out.loc[hit, "offset"] = x.offset
+        out.loc[hit, "bad"] = True
+    return out
+
+
 # --------------------------------------------------------------------------- scoring
 
 def scoring_windows(catalogue, tol_days=30) -> pd.DataFrame:

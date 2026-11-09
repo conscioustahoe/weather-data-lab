@@ -85,10 +85,11 @@ The checks, the verdicts, and how good they are.
 
 A controlled experiment. A small model (gradient boosting) predicts station temperature from HRRR fields and simple time and place features. This is a form of what forecasters call post-processing: learning corrections to a weather model from past errors.
 
-- **Four training sets, everything else fixed:** clean; faulty; faulty with QA quarantine removed; faulty with the same number of station-months removed at random.
-- **Split:** train on 2021–2022, tune on 2023, test on 2024 (clean), plus a set of held-out stations never seen in training.
-- **Metrics:** RMSE and bias against clean test data, several random seeds, broken down by fault type and station. A version that predicts a range (quantiles) is scored with CRPS if time allows.
-- **Done when:** a results table with seed-to-seed spread shows which faults hurt this model most, whether QA closes the gap, and whether QA beats random removal.
+- **Breaks first:** date each break episode, cut stations into segments, measure each segment against the newest one (homogenization). Score it on planted faults over 20 seeds and look at the real stations it flags. Code in `wxlab.qa`.
+- **Eight training sets, everything else fixed:** clean; faulty; QA'd (quarantine removed); QA'd strict (suspect removed too); random thinning (as many hours as QA'd, at random); oracle (exactly the planted fault hours removed); QA'd plus dropping bad segments; QA'd plus adjusting bad segments. Code in `wxlab.experiment`.
+- **Split:** train on 2021–2023 with fixed hyperparameters, test on 2024 minus the hours real-data QA quarantined, at training stations, faulty stations, held-out stations and storm hours.
+- **Metrics:** RMSE and bias, five seeds, broken down by fault type per station.
+- **Done when:** a results table with seed-to-seed spread shows which faults hurt this model most, whether QA closes the gap, whether QA beats random removal, and whether repairing breaks beats dropping them.
 
 ---
 
@@ -136,4 +137,10 @@ Written last after notebook 09. One page in the style of the *Learning WeatherBe
 - The findings, led by the real ones: broken sensors that NOAA's checks passed, a NOAA flag that looks wrong, and the subtleties that make weather data hard (airport reporting minutes, whole-°F precision, coastal grid boxes, marine-layer inversions and cold-air pools).
 - The results: recall on planted faults by type and size, precision on real flags, and the clean vs faulty vs QA'd vs thinned model comparison.
 - The lessons, including the ingestion ones (connection reuse, idempotent units, keeping raw data immutable).
-- How the design would scale to petabytes. This part is described and not built: how each kind of sensor data would be stored (point time series, radar volumes and gridded fields), how ingestion and QA would run on a cluster and on a live feed, and what changes at that scale. It needs its own research before writing.
+- How the design would scale to petabytes. This part is described and not built, and it needs its own research before writing. The questions it answers:
+  - What kinds of weather and climate data exist (station time series, radar volumes, satellite swaths, model and reanalysis grids, ensembles) and how big each one is. WeatherBench 2 describes several of them.
+  - How each kind is stored in production: file formats (GRIB, NetCDF, HDF5, Zarr, Parquet), chunk layout, compression and object storage.
+  - How to read them fast: reading only the chunks you need, matching the chunk layout to the reader, indexes and catalogues.
+  - How to work with petabytes from a notebook without loading them into memory: lazy arrays, dask and distributed compute next to the data.
+  - How ingestion, QA and monitoring run on a cluster and on a live feed, and what changes at that scale.
+- The page lives on the owner's website as its own page (for example `/weather-data-lab`) and links back to this repository.

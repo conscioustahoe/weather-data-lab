@@ -44,7 +44,11 @@ Planted faults cannot measure precision on real data or produce real findings, s
 
 ## Measuring the effect on a model
 
-A small gradient-boosting model predicts station temperature from HRRR fields, a form of post-processing. It is trained on clean, faulty, QA'd and randomly thinned data, with everything else fixed. The random-thinning arm is the control: without it, an improvement from QA could simply come from training on less data. Faults are planted only in the training years; the test year (2024) and a set of held-out stations stay clean. Results use several random seeds, so differences can be told apart from run-to-run noise.
+A small gradient-boosting model (LightGBM) predicts station temperature from HRRR fields, a form of post-processing. It learns the correction to HRRR and never sees the station's own reading. Eight arms train it on different versions of 2021–2023 with everything else fixed: clean, faulty, QA'd (quarantine removed), QA'd strict (suspect removed too), random thinning, an oracle that removes exactly the planted fault hours, and two arms that act on breaks by dropping or adjusting the segments that break dating finds to be off. Random thinning is the control. Without it an improvement from QA could just come from training on less data. The oracle is the best removal could ever do.
+
+Faults are planted only in the training years. The test year (2024) stays clean, apart from real faults, so the hours the real-data QA quarantined in 2024 are removed from the test set the same way for every arm. Held-out stations measure whether bad data at some stations hurts predictions at others. Five seeds give five sets of planted faults so differences can be told apart from run-to-run noise. Hyperparameters are fixed and not tuned, so there's no separate tuning year.
+
+**Breaks are dated and repaired the way climate datasets do it.** A break episode is pinned to the day with the biggest before/after difference against the neighbours, the record is cut into segments, weak breaks are pruned, and each segment's offset is measured against the newest segment (the usual homogenization convention, after NOAA's pairwise algorithm). The convention is a real assumption: if the newest segment is the broken one, adjusting spreads the fault backwards. The planted faults always end before 2024, so the experiment doesn't test that case and the notebook says so.
 
 ## Notebooks teach through a story
 
