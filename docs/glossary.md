@@ -21,6 +21,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Cold-air pooling** | On clear, calm nights, cold air drains downhill and collects in valley floors, making them much colder than nearby slopes. | 03 |
 | **Completeness** | The fraction of expected time steps that have a value. The simplest coverage metric. | 01 |
 | **Consistency** | Whether a source agrees with independent sources and with its own past. | 05 |
+| **Control chart** | A plot of a monitored number over time with a band of normal values drawn from its own history; leaving the band raises an alert. | 06 |
 | **Correctness** | Whether the values that are present are right. | 05 |
 | **Correlation coefficient (ρHV)** | A dual-polarization field that compares the horizontal and vertical echoes pulse by pulse. Rain gives values above about 0.97; birds, insects, clutter and waves give much lower values. | 02 |
 | **Coverage** | Whether the data is there: completeness overall and per condition, such as storm hours. | 05 |
@@ -62,6 +63,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Nyquist velocity** | The fastest speed a Doppler radar can measure unambiguously. Faster motion folds over and shows up with the wrong speed and sign. | 02 |
 | **Object store** | Ray's shared memory for task results. Tasks pass references to objects in it instead of copying the data. | 07 |
 | **Oracle (arm)** | An experiment arm that uses knowledge no real system has, here exactly which hours were faulty. It shows the best a method of that kind could do. | 09 |
+| **Override** | A reviewer's decision stored beside an automatic verdict, with who, when and why. It changes what users see without erasing what the checks said. | 06 |
 | **Planted fault** | A known error added on purpose to a copy of good data so a check's recall can be measured. Also called fault or anomaly injection. | 04 |
 | **POD, FAR and CSI** | Detection scores. POD: share of observed events that were also detected. FAR: share of detections that didn't happen. CSI: hits over hits, misses and false alarms combined. | 10 |
 | **Post-processing** | Learning a correction to a weather model's output from its past errors, for example a station's typical difference from HRRR by hour and season. | 09 |
@@ -99,6 +101,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **USCRN** | The US Climate Reference Network: research-grade stations built for long-term climate monitoring, with three thermometers per site. | 01 |
 | **UTC** | Coordinated Universal Time, the single time zone weather data uses. California is 7 or 8 hours behind. | 01 |
 | **Verdict** | The combined judgement on a station-hour: pass, suspect (one check fired) or quarantine (two independent kinds of evidence agree). | 05 |
+| **Verdict churn** | How often an hour's verdict changes between the run that first judged it and a later run with more data. | 06 |
 | **Volume scan** | One full set of sweeps at all tilt angles, every 4–10 minutes. | 02 |
 | **Witness check** | Judging one instrument against an independent one that measures the same thing a different way, such as a gauge against radar. Only valid where the witness can see. | 10 |
 | **Z–R relationship** | An empirical formula Z = a·R^b that turns radar reflectivity into rain rate. The constants depend on the kind of rain, so no one formula is right everywhere. | 02 |
