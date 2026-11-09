@@ -54,7 +54,7 @@ def template(grid_dir: Path, start="2021-01-01", end="2025-01-01", variable="air
     ds = xr.Dataset({variable: (("time", "y", "x"), data)},
                     coords={"time": time_, "latitude": (("y", "x"), c["latitude"]),
                             "longitude": (("y", "x"), c["longitude"])})
-    ds[variable].attrs = {"standard_name": variable, "units": "K",
+    ds[variable].attrs = {"standard_name": variable, "units": "degree_Celsius",
                           "long_name": "HRRR 1-hour forecast, 2 m above ground"}
     ds.attrs = {"source": "NOAA HRRR via notebook 03", "grid": "HRRR 3 km Lambert conformal, California crop"}
     return ds
@@ -131,3 +131,33 @@ def chunks_touched(var, **sel) -> int:
             start, stop, _ = s.indices(length)
             n *= (stop - 1) // size - start // size + 1
     return n
+
+
+def rechunk_via_intermediate(src: Path, intermediate: Path, dst: Path, inter_chunks: dict,
+                             target_chunks: dict, variable="air_temperature", workers: int = 4) -> None:
+    """Rechunk a Zarr store in two steps through an intermediate store on disk.
+
+    Going straight from day-shaped chunks to column-shaped ones makes every output chunk
+    depend on every input chunk along time, and dask's in-memory rechunk can run out of
+    memory on an array this size. The rechunker library's answer is to pass through an
+    intermediate layout whose chunks sit between the two (here: a month of hours by a
+    64 × 64 tile), written to disk. Each step then only regroups a few chunks at a time.
+    """
+    import dask
+    import xarray as xr
+
+    def step(a, b, chunks):
+        if Path(b).exists():
+            return
+        ds = xr.open_zarr(a)
+        for v in ds.variables.values():
+            v.encoding.pop("chunks", None)
+            v.encoding.pop("preferred_chunks", None)
+        sizes = {d: (ds.sizes[d] if c == -1 else c) for d, c in chunks.items()}
+        out = ds.chunk(chunks)
+        enc = {variable: {"chunks": tuple(sizes[d] for d in ds[variable].dims)}}
+        with dask.config.set(scheduler="threads", num_workers=workers):
+            out.to_zarr(b, zarr_format=3, encoding=enc)
+
+    step(src, intermediate, inter_chunks)
+    step(intermediate, dst, target_chunks)

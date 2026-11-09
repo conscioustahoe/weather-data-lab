@@ -17,6 +17,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Break episode** | A run of days flagged as a break. A two-window shift test fires on every day near a shift, so one break shows up as an episode that can last weeks. Break dating pins each episode to one day. | 09 |
 | **CF conventions** | The community standard for naming and describing weather and climate variables, for example `air_temperature` with units. | 01 |
 | **Chance baseline** | How often a check would "detect" a fault in a given window on a station with no fault, from background false alarms alone. | 05 |
+| **Chunk** | One piece of a chunked array, stored and read as a unit. A read costs roughly the number of chunks it touches. | 11 |
 | **Climatology** | The expected value for a place, day of year and time of day, averaged over many years. "Is this plausible?" means "how far is it from climatology?" | 01 |
 | **Cold-air pooling** | On clear, calm nights, cold air drains downhill and collects in valley floors, making them much colder than nearby slopes. | 03 |
 | **Completeness** | The fraction of expected time steps that have a value. The simplest coverage metric. | 01 |
@@ -47,11 +48,13 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Idempotent** | Running a unit of work twice gives the same result as running it once, so retries and reruns are safe. | 01 |
 | **Index file (.idx)** | A small text file next to a GRIB2 file listing each message's byte position, so a reader can download only the fields it needs. | 03 |
 | **Initialization, lead and valid time** | When a forecast run started, how far ahead it looks, and the moment it describes (initialization plus lead). | 03 |
+| **Intermediate layout** | A chunk shape between the source and target layouts, written to disk, that lets a rechunk run in bounded memory. | 11 |
 | **Inverse-distance weighting** | Estimating a value at a point as an average of nearby grid points, with nearer points weighted more (weight ∝ 1/distance). | 03 |
 | **ISD** | NOAA's Integrated Surface Database: hourly and sub-hourly reports from land stations, ships and buoys worldwide. | 01 |
 | **Keep-alive (HTTP)** | Reusing one network connection for many requests instead of opening a new one each time. | 03 |
 | **Lambert conformal projection** | A map projection made by laying a cone over a region; keeps shapes nearly right in mid-latitudes. HRRR's grid uses it. | 03 |
 | **Lapse rate** | How fast air temperature falls with height, about 6.5 °C per kilometre on average. | 01 |
+| **Lazy array** | An array whose values aren't read until needed. Slicing and arithmetic build a plan; bytes move only when a result is computed. | 11 |
 | **Level II** | The raw output of a NEXRAD radar: every field at every range gate, one file per volume scan. | 02 |
 | **MAD (median absolute deviation)** | The median distance of values from their median. Times 1.4826 it estimates the standard deviation without being stretched by outliers. | 05 |
 | **Manifest** | A table with one row per unit of work attempted: its key, an input fingerprint, the code version, the outcome and the output. It says what's done and what must be redone. | 07 |
@@ -77,6 +80,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Ray actor** | A stateful Ray worker: a Python object in its own process whose methods run as tasks. Its state is lost if it restarts unless checkpointed. | 07 |
 | **Ray task** | A function run somewhere in a Ray cluster. Calling it returns an object reference immediately; the result arrives later. | 07 |
 | **Recall** | The share of real problems a check catches. Needs a known list of problems, which is why faults are planted. | 04 |
+| **Rechunking** | Rewriting an array with a different chunk shape. Every output chunk needs pieces of many input chunks, so it is the array version of a shuffle. | 11 |
 | **Reference segment** | The segment every other segment is lined up with in homogenization, by convention the newest. If the newest segment is the broken one, adjusting to it spreads the fault backwards. | 09 |
 | **Reflectivity (dBZ)** | How much energy comes back to the radar, on a log scale. Light rain is around 20 dBZ and heavy rain 45 or more. | 02 |
 | **Representativeness error** | The honest disagreement between a point measurement and a grid-box average, even when both are right. | 03 |
@@ -95,6 +99,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Sweep** | One full turn of the radar antenna at one tilt angle. A sweep is a set of rays, each cut into range gates. | 02 |
 | **Time offset** | Correct values labelled with the wrong time, such as local time read as UTC (8 hours off in California winter). | 04 |
 | **Tipping bucket** | The rain gauge used at airport stations: a small seesaw that tips each time it fills with 0.01 inch (0.25 mm) of water and counts the tips. Heated so snow melts into it. | 10 |
+| **Training and analysis layouts** | Two chunk shapes for the same array: map-shaped chunks for readers that take whole maps (training), time-series-shaped chunks for readers that take long histories at a point (analysis). | 11 |
 | **Tule fog** | Dense ground fog in California's Central Valley on calm winter nights, sometimes lasting for days. | 05 |
 | **Undercatch** | A gauge catching less than actually fell, mostly because wind carries drops past the funnel; worst for snow. | 10 |
 | **USAF / WBAN** | Two historical station-numbering schemes (US Air Force; Weather Bureau, Army and Navy). Together they form an ISD station id. | 01 |
@@ -104,4 +109,5 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Verdict churn** | How often an hour's verdict changes between the run that first judged it and a later run with more data. | 06 |
 | **Volume scan** | One full set of sweeps at all tilt angles, every 4–10 minutes. | 02 |
 | **Witness check** | Judging one instrument against an independent one that measures the same thing a different way, such as a gauge against radar. Only valid where the witness can see. | 10 |
+| **Zarr** | A format that stores an n-dimensional array as a grid of compressed chunks, one object each, plus small JSON metadata, so readers fetch only the chunks they need. | 11 |
 | **Z–R relationship** | An empirical formula Z = a·R^b that turns radar reflectivity into rain rate. The constants depend on the kind of rain, so no one formula is right everywhere. | 02 |
