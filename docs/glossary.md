@@ -9,6 +9,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Arm (experiment)** | One version of a controlled experiment. Every arm trains the same model the same way and only the training data differs, so a difference in the score comes from the data. | 09 |
 | **ASOS / AWOS** | Automated weather stations at US airports. ASOS stations are run by the national weather and aviation agencies at larger airports; AWOS stations are at smaller airports and often report whole degrees Celsius. | 01 |
 | **Background (first guess)** | The model's previous short forecast, which data assimilation nudges toward new observations. | 03 |
+| **Backpressure** | Slowing the fast stages of a pipeline so a slow stage doesn't make data pile up in memory. | 07 |
 | **Ball tree** | A spatial index for finding the nearest grid points to a location quickly, used on grids that are not latitude–longitude. | 03 |
 | **Baseline (stations)** | The stations we trust enough to plant faults into: nearly complete, steady against HRRR, no gross errors and no duplicates. "Nothing we can see" rather than "certainly clean". | 04 |
 | **Bias** | The average difference between two sources (here, station minus model). A steady offset. | 03 |
@@ -52,12 +53,14 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Lapse rate** | How fast air temperature falls with height, about 6.5 °C per kilometre on average. | 01 |
 | **Level II** | The raw output of a NEXRAD radar: every field at every range gate, one file per volume scan. | 02 |
 | **MAD (median absolute deviation)** | The median distance of values from their median. Times 1.4826 it estimates the standard deviation without being stretched by outliers. | 05 |
+| **Manifest** | A table with one row per unit of work attempted: its key, an input fingerprint, the code version, the outcome and the output. It says what's done and what must be redone. | 07 |
 | **Marine layer / inversion** | Cool, moist ocean air near the surface with warmer air above it. Temperature rises with height instead of falling, so the standard lapse rate does not apply. | 03 |
 | **Missing not at random** | Data whose chance of being missing depends on the value or the conditions, like readings lost in storms. Dropping those rows biases what a model learns. | 04 |
 | **MRMS** | Multi-Radar Multi-Sensor: NOAA's national mosaic that merges every US radar onto a 1 km grid, removes non-weather echoes and estimates rainfall, with and without rain gauges. | 02 |
 | **NEXRAD (WSR-88D)** | The US network of about 160 weather radars run by NOAA, the FAA and the Air Force. | 02 |
 | **Non-weather echo** | Radar echo from things that aren't precipitation: ground and sea clutter, birds, insects, wind farms. | 02 |
 | **Nyquist velocity** | The fastest speed a Doppler radar can measure unambiguously. Faster motion folds over and shows up with the wrong speed and sign. | 02 |
+| **Object store** | Ray's shared memory for task results. Tasks pass references to objects in it instead of copying the data. | 07 |
 | **Oracle (arm)** | An experiment arm that uses knowledge no real system has, here exactly which hours were faulty. It shows the best a method of that kind could do. | 09 |
 | **Planted fault** | A known error added on purpose to a copy of good data so a check's recall can be measured. Also called fault or anomaly injection. | 04 |
 | **POD, FAR and CSI** | Detection scores. POD: share of observed events that were also detected. FAR: share of detections that didn't happen. CSI: hits over hits, misses and false alarms combined. | 10 |
@@ -69,6 +72,8 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Random thinning** | The control arm: remove as much data as QA did but at random. If QA only beats faulty data by having less data, random thinning does just as well. | 09 |
 | **Range gate** | One slot of distance along a ray (250 m for NEXRAD). The radar reports one value per gate. | 02 |
 | **Range request** | An HTTP request for a specific span of bytes of a file. | 03 |
+| **Ray actor** | A stateful Ray worker: a Python object in its own process whose methods run as tasks. Its state is lost if it restarts unless checkpointed. | 07 |
+| **Ray task** | A function run somewhere in a Ray cluster. Calling it returns an object reference immediately; the result arrives later. | 07 |
 | **Recall** | The share of real problems a check catches. Needs a known list of problems, which is why faults are planted. | 04 |
 | **Reference segment** | The segment every other segment is lined up with in homogenization, by convention the newest. If the newest segment is the broken one, adjusting to it spreads the fault backwards. | 09 |
 | **Reflectivity (dBZ)** | How much energy comes back to the radar, on a log scale. Light rain is around 20 dBZ and heavy rain 45 or more. | 02 |
@@ -79,6 +84,7 @@ Terms used in the notebooks, in plain words. Each entry names the notebook where
 | **Scan strategy (VCP)** | Volume coverage pattern: the set of tilt angles and settings a radar cycles through. Precipitation modes are faster; clear-air modes are slower and more sensitive. | 02 |
 | **SEEPS** | Stable Equitable Error in Probability Space: a daily rain score that sorts each day into dry, light or heavy, with the light/heavy line set per station from its climate. Only defined where the share of dry days is between 0.1 and 0.85. | 10 |
 | **Segment** | A stretch of a station's record between two breaks, assumed to have a constant level against its neighbours. A segment more than 0.5 °C off the reference segment is marked bad. | 09 |
+| **Shuffle** | Moving rows between workers so all rows with the same key end up together. Needed for any group-by or join on a key the data isn't already split by. | 07 |
 | **Sparse sensors** | Instruments that measure accurately at a few points and leave everything in between unobserved, such as weather stations. | 01 |
 | **Split cut** | Scanning the same low tilt twice: once with a long gap between pulses to see far, once with a short gap to measure fast winds. | 02 |
 | **Step (change)** | A sudden lasting jump in a station's readings, typical of an instrument swap, a recalibration or a station move. | 04 |
