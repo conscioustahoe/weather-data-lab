@@ -1,6 +1,6 @@
 # Context for Claude
 
-This file is read at the start of every session. It explains what this repository is for, what has already been decided and how to work in it. Longer background lives in `docs/`: read `docs/plan.md` and `docs/decisions.md` before starting any notebook.
+This file is read at the start of every session. It explains what this repository is for, what has already been decided and how to work in it.
 
 ## What this repository is
 
@@ -23,8 +23,6 @@ One dataset owned end to end: hourly observations from about 165 California weat
 
 ## Decisions already made
 
-See `docs/decisions.md` for the reasoning behind each one.
-
 - **Phases:** phase 1 is stations (NOAA ISD on AWS) plus the HRRR model; phase 2 adds radar (NEXRAD Level II and the MRMS mosaic), rebuilds the pipeline with Ray, Spark and Beam, and covers gridded data at scale (xarray, Zarr, xarray-beam). Phase 2 does not start until phase 1 is complete.
 - **Variables:** air temperature is the main variable; dew point is checked too; wind and precipitation are parsed as supporting data.
 - **Reference:** HRRR's 1-hour forecast (not the analysis, which assimilates the same station reports), read with Herbie, 2021–2024 to avoid earlier model-version changes. Values at station points are stored, plus a California crop of the grid (2021–2024) for the gridded-data notebook.
@@ -32,10 +30,6 @@ See `docs/decisions.md` for the reasoning behind each one.
 - **Monitoring:** checks run month by month, recording metrics per run.
 - **Model impact:** gradient boosting predicting the station's correction to HRRR, trained on eight arms (clean, faulty, QA'd, QA'd strict, random thinning, oracle, drop segments, adjust segments); test on 2024 minus real quarantined hours, at training and held-out stations; five seeds.
 - **Runtime:** everything runs locally on a laptop; no GPU. Notebooks are not designed for Colab.
-
-## The plan
-
-See `docs/plan.md` for each notebook's scope and what "done" looks like. Phase 1 is notebooks 01, 03, 04, 05 and 09.
 
 ## How to work in this repository
 
@@ -64,4 +58,3 @@ See `docs/plan.md` for each notebook's scope and what "done" looks like. Phase 1
 ### Working style
 - Before writing a notebook, explain the plan for it in a few sentences and confirm it with the owner.
 - When a domain fact matters (a format detail, a sensor behavior, a typical error size), say where it comes from, and prefer official documentation.
-- Keep `docs/learning-log.md` useful: when the owner learns something surprising or makes a decision, offer to add a line.
